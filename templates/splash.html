@@ -9,8 +9,8 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--white:#fff;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8}
 body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh}
-.hero{position:relative;height:280px;overflow:hidden}
-.hero img{width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:brightness(0.75)}
+.hero{position:relative;height:280px;overflow:hidden;width:100vw;max-width:430px}
+.hero img{width:100%;height:100%;object-fit:cover;object-position:center center;filter:brightness(0.75)}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(to top,var(--bg),transparent)}
 .hero-top{position:absolute;top:0;left:0;right:0;padding:16px 18px;background:linear-gradient(to bottom,rgba(8,14,26,0.7),transparent);display:flex;align-items:center;gap:10px;z-index:2}
 .bico{width:40px;height:40px;background:linear-gradient(135deg,var(--cyan),var(--blue));border-radius:11px;display:flex;align-items:center;justify-content:center}
