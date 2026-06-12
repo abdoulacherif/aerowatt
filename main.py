@@ -29,3 +29,7 @@ app.include_router(wallet.router)
 async def root():
     from fastapi.responses import FileResponse
     return FileResponse("templates/splash.html")
+
+@app.get('/messages')
+async def messages_page():
+    return FileResponse('templates/messages.html')
