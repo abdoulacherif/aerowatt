@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AEROWATT — Équipe</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--dark:#0D1827;--white:#fff;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8;--green:#00B86B}
+body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:80px}
+.top-bar{background:linear-gradient(135deg,var(--dark),#0A1E3A);padding:16px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.top-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;flex:1;text-align:center}
+.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mon-code-card{margin:16px 16px 0;background:linear-gradient(135deg,var(--dark),#0A1E3A);border-radius:20px;padding:20px;border:1px solid rgba(0,229,255,0.15)}
+.code-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.code-val{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:var(--cyan);letter-spacing:4px;margin-bottom:12px}
+.code-actions{display:flex;gap:10px}
+.code-btn{flex:1;padding:10px;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-copy{background:rgba(0,229,255,0.15);color:var(--cyan);border:1px solid rgba(0,229,255,0.3)}
+.btn-share{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff}
+.stats-row{display:flex;gap:10px;margin:12px 16px 0}
+.stat-card{flex:1;background:#fff;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid var(--border)}
+.stat-icon{width:36px;height:36px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+.stat-val{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;margin-bottom:3px}
+.stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.commission-card{margin:14px 16px 0;background:#fff;border-radius:18px;padding:18px;border:1px solid var(--border)}
+.section-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.level-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:8px;border:1px solid var(--border)}
+.level-badge{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:11px;font-weight:900;flex-shrink:0}
+.l1{background:linear-gradient(135deg,#FFD700,#FF9A3C);color:var(--black)}
+.l2{background:linear-gradient(135deg,#C0C0C0,#A0A0A0);color:var(--black)}
+.l3{background:linear-gradient(135deg,#CD7F32,#A0522D);color:#fff}
+.level-info{flex:1}
+.level-name{font-size:13px;font-weight:800;color:var(--black)}
+.level-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.level-pct{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--orange)}
+.gains-card{margin:14px 16px 0;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:18px;padding:18px;color:#fff}
+.gains-title{font-size:12px;font-weight:700;opacity:.8;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.gains-val{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;margin-bottom:12px}
+.gains-row{display:flex;justify-content:space-between}
+.gains-item{text-align:center}
+.gains-item-val{font-family:'Orbitron',monospace;font-size:14px;font-weight:700}
+.gains-item-lbl{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.filleuls-section{margin:14px 16px 0}
+.filleuls-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.filleuls-title{font-size:14px;font-weight:800;color:var(--black)}
+.tabs-small{display:flex;background:#fff;border-radius:10px;padding:3px;border:1px solid var(--border);margin-bottom:12px}
+.tab-s{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;color:var(--muted)}
+.tab-s.active{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff}
+.filleul-item{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.filleul-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.filleul-name{font-size:13px;font-weight:800;color:var(--black)}
+.filleul-date{font-size:11px;color:var(--muted);margin-top:2px}
+.filleul-level{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:3px;display:inline-block}
+.fl1{background:rgba(255,215,0,0.15);color:#CC8800}
+.fl2{background:rgba(192,192,192,0.2);color:#888}
+.fl3{background:rgba(205,127,50,0.15);color:#A0522D}
+.filleul-gain{margin-left:auto;text-align:right}
+.filleul-gain-val{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--green)}
+.filleul-gain-lbl{font-size:9px;color:var(--muted);text-transform:uppercase}
+.empty-filleuls{text-align:center;padding:30px 20px;background:#fff;border-radius:14px;border:1px solid var(--border)}
+.empty-filleuls-icon{font-size:40px;margin-bottom:10px}
+.empty-filleuls-txt{font-size:13px;color:var(--muted);margin-bottom:14px}
+.invite-btn{padding:12px 24px;background:linear-gradient(135deg,var(--orange),var(--orange2));border:none;border-radius:12px;color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+.regles-card{margin:14px 16px 0;background:#fff;border-radius:18px;padding:18px;border:1px solid var(--border)}
+.regle-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.regle-item:last-child{border-bottom:none}
+.regle-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.regle-txt{font-size:12px;color:var(--muted);line-height:1.5}
+.regle-txt strong{color:var(--black)}
+.navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 6px;gap:3px;cursor:pointer;text-decoration:none}
+.nav-lbl{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav-item.active .nav-lbl{color:var(--blue)}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--blue);display:none}
+.nav-item.active .nav-dot{display:block}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <button class="back-btn" onclick="location.href='/dashboard'"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+  <div class="top-title">MON ÉQUIPE</div>
+  <div style="width:34px"></div>
+</div>
+<div class="mon-code-card">
+  <div class="code-label">Mon code de parrainage</div>
+  <div class="code-val" id="mon-code">AW-742281</div>
+  <div class="code-actions">
+    <button class="code-btn btn-copy" onclick="copyCode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="#00E5FF"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Copier</button>
+    <button class="code-btn btn-share" onclick="shareCode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>Partager</button>
+  </div>
+</div>
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(0,102,255,0.1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#0066FF"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+    <div class="stat-val" style="color:var(--blue)" id="total-filleuls">0</div>
+    <div class="stat-lbl">Filleuls</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(0,184,107,0.1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#00B86B"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
+    <div class="stat-val" style="color:var(--green)" id="gains-total">0</div>
+    <div class="stat-lbl">XAF Gagnés</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(255,107,0,0.1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+    <div class="stat-val" style="color:var(--orange)" id="actifs-count">0</div>
+    <div class="stat-lbl">Actifs</div>
+  </div>
+</div>
+<div class="commission-card">
+  <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Taux de commission</div>
+  <div class="level-row"><div class="level-badge l1">N1</div><div class="level-info"><div class="level-name">Filleuls directs</div><div class="level-desc">Commission sur premier dépôt</div></div><div class="level-pct" id="pct-n1">20%</div></div>
+  <div class="level-row"><div class="level-badge l2">N2</div><div class="level-info"><div class="level-name">Filleuls indirects</div><div class="level-desc">Filleuls de vos filleuls</div></div><div class="level-pct" id="pct-n2">8%</div></div>
+  <div class="level-row"><div class="level-badge l3">N3</div><div class="level-info"><div class="level-name">Niveau 3</div><div class="level-desc">Filleuls de niveau 3</div></div><div class="level-pct" id="pct-n3">3%</div></div>
+</div>
+<div class="gains-card">
+  <div class="gains-title">Total commissions reçues</div>
+  <div class="gains-val" id="gains-display">0 XAF</div>
+  <div class="gains-row">
+    <div class="gains-item"><div class="gains-item-val" id="gains-n1">0</div><div class="gains-item-lbl">Niveau 1</div></div>
+    <div class="gains-item"><div class="gains-item-val" id="gains-n2">0</div><div class="gains-item-lbl">Niveau 2</div></div>
+    <div class="gains-item"><div class="gains-item-val" id="gains-n3">0</div><div class="gains-item-lbl">Niveau 3</div></div>
+  </div>
+</div>
+<div class="filleuls-section">
+  <div class="filleuls-header"><div class="filleuls-title">Mes filleuls</div><div style="font-size:12px;color:var(--muted)" id="filleuls-count">0 membres</div></div>
+  <div class="tabs-small">
+    <div class="tab-s active" onclick="filterLevel('all',this)">Tous</div>
+    <div class="tab-s" onclick="filterLevel('1',this)">Niveau 1</div>
+    <div class="tab-s" onclick="filterLevel('2',this)">Niveau 2</div>
+    <div class="tab-s" onclick="filterLevel('3',this)">Niveau 3</div>
+  </div>
+  <div id="filleuls-list"></div>
+</div>
+<div class="regles-card">
+  <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0066FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>Règles du parrainage</div>
+  <div class="regle-item"><div class="regle-num">1</div><div class="regle-txt">La commission de <strong>20% (N1)</strong>, <strong>8% (N2)</strong> et <strong>3% (N3)</strong> est versée sur le <strong>premier dépôt</strong> de chaque filleul.</div></div>
+  <div class="regle-item"><div class="regle-num">2</div><div class="regle-txt">Les commissions sont <strong>créditées instantanément</strong> dès que votre filleul effectue son dépôt.</div></div>
+  <div class="regle-item"><div class="regle-num">3</div><div class="regle-txt">Il n'y a <strong>pas de limite</strong> au nombre de filleuls que vous pouvez parrainer.</div></div>
+  <div class="regle-item"><div class="regle-num">4</div><div class="regle-txt">Les commissions peuvent être <strong>retirées à tout moment</strong> dès le minimum de retrait atteint.</div></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="navbar">
+  <a class="nav-item" href="/dashboard"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#7A9BB5"/></svg><span class="nav-lbl">Accueil</span></a>
+  <a class="nav-item" href="/revenu"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Revenu</span></a>
+  <a class="nav-item" href="/actualites"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#7A9BB5"/></svg><span class="nav-lbl">Actualités</span></a>
+  <a class="nav-item active" href="/equipe"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#0066FF"/></svg><span class="nav-lbl">Équipe</span><div class="nav-dot"></div></a>
+  <a class="nav-item" href="/profil"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.8 4-4s-1.3-4-4-4-4 1.8-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Moi</span></a>
+</div>
+<script>
+const CONFIG={monCode:"AW-742281",commissions:{n1:20,n2:8,n3:3},filleuls:[]};
+function init(){
+  document.getElementById('mon-code').textContent=CONFIG.monCode;
+  document.getElementById('pct-n1').textContent=CONFIG.commissions.n1+'%';
+  document.getElementById('pct-n2').textContent=CONFIG.commissions.n2+'%';
+  document.getElementById('pct-n3').textContent=CONFIG.commissions.n3+'%';
+  const total=CONFIG.filleuls.length,actifs=CONFIG.filleuls.filter(f=>f.actif).length;
+  const gains=CONFIG.filleuls.reduce((s,f)=>s+f.gain,0);
+  document.getElementById('total-filleuls').textContent=total;
+  document.getElementById('actifs-count').textContent=actifs;
+  document.getElementById('gains-total').textContent=gains.toLocaleString();
+  document.getElementById('gains-display').textContent=gains.toLocaleString()+' XAF';
+  document.getElementById('filleuls-count').textContent=total+' membre'+(total>1?'s':'');
+  renderFilleuls(CONFIG.filleuls);
+}
+function renderFilleuls(list){
+  const c=document.getElementById('filleuls-list');
+  if(list.length===0){
+    c.innerHTML=`<div class="empty-filleuls"><div class="empty-filleuls-icon">👥</div><div class="empty-filleuls-txt">Pas encore de filleuls.<br>Partagez votre code !</div><button class="invite-btn" onclick="shareCode()">Inviter des amis</button></div>`;
+    return;
+  }
+  c.innerHTML='';
+  list.forEach(f=>{
+    const ini=f.nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const lc=['','fl1','fl2','fl3'][f.niveau]||'fl1';
+    c.innerHTML+=`<div class="filleul-item"><div class="filleul-avatar">${ini}</div><div><div class="filleul-name">${f.nom}</div><div class="filleul-date">${f.tel} · ${f.date}</div><span class="filleul-level ${lc}">Niveau ${f.niveau}</span></div><div class="filleul-gain"><div class="filleul-gain-val">+${f.gain.toLocaleString()}</div><div class="filleul-gain-lbl">XAF gagné</div></div></div>`;
+  });
+}
+function filterLevel(level,btn){
+  document.querySelectorAll('.tab-s').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFilleuls(level==='all'?CONFIG.filleuls:CONFIG.filleuls.filter(f=>String(f.niveau)===level));
+}
+function copyCode(){navigator.clipboard.writeText(CONFIG.monCode).catch(()=>{});showToast('✅ Code copié : '+CONFIG.monCode);}
+function shareCode(){
+  const msg=`🌬️ Rejoins AEROWATT !\nCode : ${CONFIG.monCode}\n👉 https://aerowatt.vercel.app`;
+  if(navigator.share){navigator.share({title:'AEROWATT',text:msg});}
+  else{navigator.clipboard.writeText(msg).catch(()=>{});showToast('✅ Lien copié !');}
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+init();
+</script>
+</body>
+</html>
