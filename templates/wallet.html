@@ -1,25 +1,274 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>AEROWATT — wallet</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Nunito',sans-serif;background:#F0F6FF;max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:80px}.top-bar{position:fixed;top:0;left:0;right:0;max-width:430px;margin:0 auto;background:#0D1827;padding:16px 18px;display:flex;align-items:center}.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}.top-title{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:#fff;letter-spacing:2px;flex:1;text-align:center}.coming{text-align:center;padding:40px 24px}.icon{font-size:64px;margin-bottom:16px}.title{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:#080E1A;margin-bottom:8px;text-transform:uppercase}.sub{font-size:13px;color:#7A9BB5}.navbar{position:fixed;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;background:#fff;border-top:1px solid #E2EBF8;display:flex}.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 6px;gap:3px;text-decoration:none;font-size:9px;color:#7A9BB5;font-weight:700;text-transform:uppercase}</style>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AEROWATT — Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--dark:#0D1827;--white:#fff;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8;--green:#00B86B}
+body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:80px}
+.top-bar{background:linear-gradient(135deg,var(--dark),#0A1E3A);padding:16px 18px;display:flex;align-items:center;gap:12px}
+.top-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;flex:1;text-align:center}
+.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.solde-card{margin:16px 16px 0;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:20px;padding:24px;color:#fff;position:relative;overflow:hidden}
+.solde-card::before{content:'';position:absolute;top:-40px;right:-40px;width:150px;height:150px;background:rgba(255,255,255,0.08);border-radius:50%}
+.solde-lbl{font-size:11px;opacity:.8;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.solde-val{font-family:'Orbitron',monospace;font-size:34px;font-weight:900;text-shadow:0 0 20px rgba(255,255,255,0.3);margin-bottom:4px}
+.solde-sub{font-size:12px;opacity:.7}
+.action-btns{display:flex;gap:12px;margin:14px 16px 0}
+.action-btn{flex:1;padding:14px;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.5px}
+.btn-depot{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;box-shadow:0 6px 20px rgba(255,107,0,0.35)}
+.btn-retrait{background:#fff;color:var(--blue);border:2px solid var(--border);box-shadow:0 4px 14px rgba(0,102,255,0.1)}
+.tabs{display:flex;background:#fff;border-radius:12px;padding:4px;margin:14px 16px 0;border:1px solid var(--border)}
+.tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;border-radius:9px;cursor:pointer;color:var(--muted);transition:all .2s}
+.tab.active{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff}
+.panel{display:none;margin-top:14px}
+.panel.active{display:block}
+.form-card{margin:0 16px;background:#fff;border-radius:18px;padding:20px;border:1px solid var(--border)}
+.form-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block}
+.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--black);outline:none;transition:border-color .25s}
+.form-input:focus{border-color:var(--cyan)}
+.form-input::placeholder{color:#C0CEDF}
+.methods{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.method-btn{padding:12px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
+.method-btn.active{border-color:var(--blue);background:rgba(0,102,255,0.05)}
+.method-logo{font-size:22px;margin-bottom:4px}
+.method-name{font-size:11px;font-weight:800;color:var(--black)}
+.method-num{font-size:10px;color:var(--muted);margin-top:2px}
+.submit-btn{width:100%;padding:15px;border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;margin-top:4px}
+.btn-orange{background:linear-gradient(135deg,var(--orange),var(--orange2));box-shadow:0 6px 20px rgba(255,107,0,0.35)}
+.btn-blue{background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 6px 20px rgba(0,102,255,0.3)}
+.info-box{margin-top:14px;background:var(--bg);border-radius:12px;padding:12px 14px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6}
+.info-box strong{color:var(--black)}
+.hist-section{margin:16px 16px 0}
+.hist-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:12px}
+.hist-item{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.hist-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hist-label{font-size:13px;font-weight:700;color:var(--black)}
+.hist-date{font-size:11px;color:var(--muted);margin-top:2px}
+.hist-amount{margin-left:auto;font-family:'Orbitron',monospace;font-size:13px;font-weight:700}
+.hist-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:3px;text-align:right}
+.s-ok{background:rgba(0,184,107,0.1);color:var(--green)}
+.s-wait{background:rgba(255,107,0,0.1);color:var(--orange)}
+.navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 6px;gap:3px;cursor:pointer;text-decoration:none}
+.nav-lbl{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(8,14,26,0.7);z-index:400;align-items:center;justify-content:center}
+.modal-ov.show{display:flex}
+.modal-box{background:#fff;border-radius:20px;padding:28px 24px;width:88%;max-width:360px;text-align:center}
+.modal-icon{font-size:48px;margin-bottom:12px}
+.modal-title{font-size:18px;font-weight:800;color:var(--black);margin-bottom:8px}
+.modal-sub{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:20px}
+.modal-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer}
+</style>
 </head>
 <body>
 <div class="top-bar">
   <button class="back-btn" onclick="location.href='/dashboard'"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-  <div class="top-title">wallet</div>
+  <div class="top-title">WALLET</div>
   <div style="width:34px"></div>
 </div>
-<div class="coming" style="margin-top:80px">
-  <div class="icon">🚧</div>
-  <div class="title">wallet</div>
-  <div class="sub">Page en construction — disponible bientôt</div>
+<div class="solde-card">
+  <div class="solde-lbl">Solde disponible</div>
+  <div class="solde-val" id="solde-val">0 XAF</div>
+  <div class="solde-sub">Mis à jour en temps réel</div>
+</div>
+<div class="action-btns">
+  <button class="action-btn btn-depot" onclick="switchTab('depot',document.querySelectorAll('.tab')[0])">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+    Dépôt
+  </button>
+  <button class="action-btn btn-retrait" onclick="switchTab('retrait',document.querySelectorAll('.tab')[1])">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="#0066FF"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+    Retrait
+  </button>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('depot',this)">Dépôt</div>
+  <div class="tab" onclick="switchTab('retrait',this)">Retrait</div>
+  <div class="tab" onclick="switchTab('historique',this)">Historique</div>
+</div>
+<!-- DEPOT -->
+<div class="panel active" id="panel-depot">
+  <div class="form-card">
+    <div class="form-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>Effectuer un dépôt</div>
+    <div class="form-group">
+      <label class="form-label">Méthode de paiement</label>
+      <div class="methods">
+        <div class="method-btn active" onclick="selectMethod(this,'Orange Money')">
+          <div class="method-logo">🟠</div>
+          <div class="method-name">Orange Money</div>
+          <div class="method-num" id="om-num">+235 XX XX XX</div>
+        </div>
+        <div class="method-btn" onclick="selectMethod(this,'Wave')">
+          <div class="method-logo">🌊</div>
+          <div class="method-name">Wave</div>
+          <div class="method-num" id="wave-num">+235 XX XX XX</div>
+        </div>
+        <div class="method-btn" onclick="selectMethod(this,'MTN')">
+          <div class="method-logo">💛</div>
+          <div class="method-name">MTN Money</div>
+          <div class="method-num" id="mtn-num">+235 XX XX XX</div>
+        </div>
+        <div class="method-btn" onclick="selectMethod(this,'Moov')">
+          <div class="method-logo">🔵</div>
+          <div class="method-name">Moov Money</div>
+          <div class="method-num" id="moov-num">+235 XX XX XX</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Montant (XAF)</label>
+      <input type="number" class="form-input" placeholder="Minimum 4,000 XAF" id="depot-montant" min="4000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Numéro expéditeur</label>
+      <input type="tel" class="form-input" placeholder="Votre numéro Mobile Money" id="depot-tel">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Référence transaction</label>
+      <input type="text" class="form-input" placeholder="ID ou référence du paiement" id="depot-ref">
+    </div>
+    <button class="submit-btn btn-orange" onclick="soumettreDépôt()">Soumettre le dépôt</button>
+    <div class="info-box" id="depot-info">
+      <strong>Comment déposer :</strong><br>
+      1. Envoyez le montant sur le numéro <strong id="info-num">Orange Money</strong><br>
+      2. Entrez votre numéro et la référence de transaction<br>
+      3. L'admin validera votre dépôt sous 5-30 minutes
+    </div>
+  </div>
+</div>
+<!-- RETRAIT -->
+<div class="panel" id="panel-retrait">
+  <div class="form-card">
+    <div class="form-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0066FF"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>Demander un retrait</div>
+    <div class="form-group">
+      <label class="form-label">Méthode de retrait</label>
+      <div class="methods">
+        <div class="method-btn active" onclick="selectMethod(this,'Orange Money')">
+          <div class="method-logo">🟠</div>
+          <div class="method-name">Orange Money</div>
+        </div>
+        <div class="method-btn" onclick="selectMethod(this,'Wave')">
+          <div class="method-logo">🌊</div>
+          <div class="method-name">Wave</div>
+        </div>
+        <div class="method-btn" onclick="selectMethod(this,'MTN')">
+          <div class="method-logo">💛</div>
+          <div class="method-name">MTN Money</div>
+        </div>
+        <div class="method-btn" onclick="selectMethod(this,'Moov')">
+          <div class="method-logo">🔵</div>
+          <div class="method-name">Moov Money</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Montant à retirer (XAF)</label>
+      <input type="number" class="form-input" placeholder="Minimum 1,200 XAF" id="retrait-montant" min="1200">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Numéro de réception</label>
+      <input type="tel" class="form-input" placeholder="Numéro Mobile Money destinataire" id="retrait-tel">
+    </div>
+    <button class="submit-btn btn-blue" onclick="soumettreRetrait()">Demander le retrait</button>
+    <div class="info-box">
+      <strong>Informations retrait :</strong><br>
+      • Minimum de retrait : <strong>1,200 XAF</strong><br>
+      • Traitement : <strong>5-60 minutes</strong><br>
+      • Disponible 24h/7j
+    </div>
+  </div>
+</div>
+<!-- HISTORIQUE -->
+<div class="panel" id="panel-historique">
+  <div class="hist-section">
+    <div class="hist-title">Historique des transactions</div>
+    <div id="hist-list">
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Aucune transaction pour l'instant</div>
+    </div>
+  </div>
+</div>
+<!-- MODAL CONFIRMATION -->
+<div class="modal-ov" id="modal-confirm">
+  <div class="modal-box">
+    <div class="modal-icon" id="modal-icon">✅</div>
+    <div class="modal-title" id="modal-title">Demande envoyée !</div>
+    <div class="modal-sub" id="modal-sub">Votre demande a été soumise avec succès.</div>
+    <button class="modal-btn" onclick="document.getElementById('modal-confirm').classList.remove('show')">OK</button>
+  </div>
 </div>
 <div class="navbar">
-  <a class="nav-item" href="/dashboard"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#7A9BB5"/></svg>Accueil</a>
-  <a class="nav-item" href="/revenu"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="#7A9BB5"/></svg>Revenu</a>
-  <a class="nav-item" href="/actualites"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#7A9BB5"/></svg>Actualités</a>
-  <a class="nav-item" href="/equipe"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#7A9BB5"/></svg>Équipe</a>
-  <a class="nav-item" href="/profil"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.8 4-4s-1.3-4-4-4-4 1.8-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z" fill="#7A9BB5"/></svg>Moi</a>
+  <a class="nav-item" href="/dashboard"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#7A9BB5"/></svg><span class="nav-lbl">Accueil</span></a>
+  <a class="nav-item" href="/revenu"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Revenu</span></a>
+  <a class="nav-item" href="/actualites"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#7A9BB5"/></svg><span class="nav-lbl">Actualités</span></a>
+  <a class="nav-item" href="/equipe"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#7A9BB5"/></svg><span class="nav-lbl">Équipe</span></a>
+  <a class="nav-item" href="/profil"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.8 4-4s-1.3-4-4-4-4 1.8-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Moi</span></a>
 </div>
-</body></html>
+<script>
+// CONFIG ADMIN — modifiable depuis le panel
+const CONFIG={
+  solde:1000,
+  minDepot:4000,
+  minRetrait:1200,
+  numeros:{
+    'Orange Money':'+235 66 XX XX XX',
+    'Wave':'+235 77 XX XX XX',
+    'MTN':'+235 88 XX XX XX',
+    'Moov':'+235 99 XX XX XX'
+  }
+};
+let selectedMethod='Orange Money';
+document.getElementById('solde-val').textContent=CONFIG.solde.toLocaleString()+' XAF';
+document.getElementById('om-num').textContent=CONFIG.numeros['Orange Money'];
+document.getElementById('wave-num').textContent=CONFIG.numeros['Wave'];
+document.getElementById('mtn-num').textContent=CONFIG.numeros['MTN'];
+document.getElementById('moov-num').textContent=CONFIG.numeros['Moov'];
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+function selectMethod(btn,method){
+  selectedMethod=method;
+  btn.closest('.methods').querySelectorAll('.method-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const infoNum=document.getElementById('info-num');
+  if(infoNum)infoNum.textContent=method+' ('+CONFIG.numeros[method]+')';
+}
+function soumettreDépôt(){
+  const montant=document.getElementById('depot-montant').value;
+  const tel=document.getElementById('depot-tel').value;
+  const ref=document.getElementById('depot-ref').value;
+  if(!montant||montant<CONFIG.minDepot){alert('Montant minimum : '+CONFIG.minDepot.toLocaleString()+' XAF');return;}
+  if(!tel){alert('Entrez votre numéro');return;}
+  if(!ref){alert('Entrez la référence de transaction');return;}
+  document.getElementById('modal-icon').textContent='⏳';
+  document.getElementById('modal-title').textContent='Dépôt soumis !';
+  document.getElementById('modal-sub').textContent=`Votre dépôt de ${Number(montant).toLocaleString()} XAF via ${selectedMethod} est en cours de validation par l'admin (5-30 min).`;
+  document.getElementById('modal-confirm').classList.add('show');
+  document.getElementById('depot-montant').value='';
+  document.getElementById('depot-tel').value='';
+  document.getElementById('depot-ref').value='';
+}
+function soumettreRetrait(){
+  const montant=document.getElementById('retrait-montant').value;
+  const tel=document.getElementById('retrait-tel').value;
+  if(!montant||montant<CONFIG.minRetrait){alert('Montant minimum : '+CONFIG.minRetrait.toLocaleString()+' XAF');return;}
+  if(montant>CONFIG.solde){alert('Solde insuffisant');return;}
+  if(!tel){alert('Entrez votre numéro de réception');return;}
+  document.getElementById('modal-icon').textContent='✅';
+  document.getElementById('modal-title').textContent='Retrait demandé !';
+  document.getElementById('modal-sub').textContent=`Votre retrait de ${Number(montant).toLocaleString()} XAF vers ${selectedMethod} (${tel}) sera traité sous 5-60 minutes.`;
+  document.getElementById('modal-confirm').classList.add('show');
+  document.getElementById('retrait-montant').value='';
+  document.getElementById('retrait-tel').value='';
+}
+</script>
+</body>
+</html>
