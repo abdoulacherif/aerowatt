@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from config import supabase, SECRET_KEY, ALGORITHM
-from passlib.hash import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
+import hashlib
+import secrets
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,6 +18,18 @@ class RegisterData(BaseModel):
     password: str
     referral: str = ""
 
+def hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
+    return f"{salt}:{hashed}"
+
+def verify_password(password: str, stored: str) -> bool:
+    try:
+        salt, hashed = stored.split(":")
+        return hashlib.sha256((password + salt).encode()).hexdigest() == hashed
+    except:
+        return False
+
 def create_token(user_id: str):
     payload = {"sub": user_id, "exp": datetime.utcnow() + timedelta(days=30)}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
@@ -26,7 +39,7 @@ async def register(data: RegisterData):
     existing = supabase.table("users").select("id").eq("telephone", data.telephone).execute()
     if existing.data:
         raise HTTPException(400, "Numéro déjà utilisé")
-    hashed = bcrypt.hash(data.password)
+    hashed = hash_password(data.password)
     user = supabase.table("users").insert({
         "nom": data.nom,
         "telephone": data.telephone,
@@ -44,6 +57,6 @@ async def login(data: LoginData):
     if not user.data:
         raise HTTPException(400, "Numéro introuvable")
     u = user.data[0]
-    if not bcrypt.verify(data.password, u["password"]):
+    if not verify_password(data.password, u["password"]):
         raise HTTPException(400, "Mot de passe incorrect")
     return {"token": create_token(u["id"]), "user": {"nom": u["nom"], "solde": u["solde"]}}
