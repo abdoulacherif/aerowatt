@@ -118,10 +118,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </div>
 <script>
 const token=localStorage.getItem('token');
-function init(){
-  const nom=localStorage.getItem('user_nom')||'Utilisateur';
-  const tel=localStorage.getItem('user_tel')||'+235 XX XX XX';
-  const code=localStorage.getItem('user_code')||'AW-000000';
+async function init(){
+  if(!token){ location.href='/'; return; }
+  try {
+    const r = await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){ localStorage.clear(); location.href='/'; return; }
+    const u = await r.json();
+    const nom = u.nom||'Utilisateur';
+    const tel = u.telephone||'+235 XX XX XX';
+    const code = u.mon_code||'AW-000000';
+    const solde = u.solde||0;
+    document.getElementById('stat-solde').textContent = solde.toLocaleString();
   document.getElementById('user-name').textContent=nom;
   document.getElementById('user-tel').textContent=tel;
   document.getElementById('avatar-initials').textContent=nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)||'AW';
