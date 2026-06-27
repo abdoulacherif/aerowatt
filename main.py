@@ -53,3 +53,7 @@ async def wallet():
 @app.get("/admin")
 async def admin():
     return FileResponse("templates/admin.html")
+
+@app.get('/preuves')
+async def preuves():
+    return FileResponse('templates/preuves.html')
