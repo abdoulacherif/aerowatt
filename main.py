@@ -140,3 +140,37 @@ async def demander_retrait(data: dict, credentials: HTTPAuthorizationCredentials
         "statut": "en_attente"
     }).execute()
     return {"message": "Retrait demandé", "id": tx.data[0]["id"]}
+
+@app.post("/api/investir")
+async def investir(data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from config import supabase, SECRET_KEY, ALGORITHM
+    from datetime import datetime, timedelta
+    payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    user_id = payload.get("sub")
+    user = supabase.table("users").select("solde").eq("id", user_id).execute()
+    solde = user.data[0]["solde"]
+    montant = data.get("montant", 0)
+    if montant > solde:
+        raise HTTPException(400, "Solde insuffisant")
+    date_fin = datetime.utcnow() + timedelta(days=data.get("cycle_jours", 20))
+    inv = supabase.table("investments").insert({
+        "user_id": user_id,
+        "plan_id": data.get("plan_id", 0),
+        "plan_nom": data.get("plan_nom", ""),
+        "montant": montant,
+        "revenu_quotidien": data.get("revenu_quotidien", 0),
+        "revenu_total": data.get("revenu_total", 0),
+        "cycle_jours": data.get("cycle_jours", 20),
+        "date_fin": date_fin.isoformat(),
+        "actif": True
+    }).execute()
+    nouveau_solde = solde - montant
+    supabase.table("users").update({"solde": nouveau_solde}).eq("id", user_id).execute()
+    supabase.table("transactions").insert({
+        "user_id": user_id,
+        "type": "investissement",
+        "montant": montant,
+        "statut": "approuve",
+        "note": data.get("plan_nom", "")
+    }).execute()
+    return {"message": "Investissement confirmé", "nouveau_solde": nouveau_solde}
