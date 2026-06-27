@@ -240,6 +240,24 @@ function renderPlans(){
   });
 }
 renderPlans();
+
+// Charger solde depuis Supabase
+async function loadUserData(){
+  const token = localStorage.getItem('token');
+  if(!token){ location.href='/'; return; }
+  try {
+    const r = await fetch('/api/me', {
+      headers: {'Authorization': 'Bearer '+token}
+    });
+    if(r.ok){
+      const d = await r.json();
+      document.getElementById('solde-display').textContent = d.solde.toLocaleString();
+      localStorage.setItem('user_nom', d.nom);
+      localStorage.setItem('user_solde', d.solde);
+    }
+  } catch(e){ console.log('offline mode'); }
+}
+loadUserData();
 let currentPlan=null,currentQty=1;
 function openModal(id){
   currentPlan=CONFIG.plans.find(p=>p.id===id);if(!currentPlan||!currentPlan.ouvert)return;

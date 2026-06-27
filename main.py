@@ -57,3 +57,86 @@ async def admin():
 @app.get('/preuves')
 async def preuves():
     return FileResponse('templates/preuves.html')
+
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import jwt, JWTError
+
+security = HTTPBearer()
+
+@app.get("/api/me")
+async def get_me(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from config import supabase, SECRET_KEY, ALGORITHM
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        user = supabase.table("users").select("*").eq("id", user_id).execute()
+        if not user.data:
+            raise HTTPException(404, "Utilisateur introuvable")
+        u = user.data[0]
+        return {
+            "id": u["id"],
+            "nom": u["nom"],
+            "telephone": u["telephone"],
+            "solde": u["solde"],
+            "mon_code": u.get("mon_code",""),
+            "roue_fait": u.get("roue_fait", False)
+        }
+    except JWTError:
+        raise HTTPException(401, "Token invalide")
+
+@app.get("/api/plans")
+async def get_plans():
+    from config import supabase
+    plans = supabase.table("plans").select("*").order("prix").execute()
+    return plans.data
+
+@app.get("/api/config")
+async def get_config():
+    from config import supabase
+    cfg = supabase.table("config").select("*").execute()
+    return {row["cle"]: row["valeur"] for row in cfg.data}
+
+@app.get("/api/transactions")
+async def get_transactions(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from config import supabase, SECRET_KEY, ALGORITHM
+    payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    user_id = payload.get("sub")
+    txs = supabase.table("transactions").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+    return txs.data
+
+@app.post("/api/depot")
+async def demander_depot(data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from config import supabase, SECRET_KEY, ALGORITHM
+    payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    user_id = payload.get("sub")
+    tx = supabase.table("transactions").insert({
+        "user_id": user_id,
+        "type": "depot",
+        "montant": data.get("montant"),
+        "methode": data.get("methode",""),
+        "numero_envoi": data.get("telephone",""),
+        "reference": data.get("reference",""),
+        "statut": "en_attente"
+    }).execute()
+    return {"message": "Dépôt soumis", "id": tx.data[0]["id"]}
+
+@app.post("/api/retrait")
+async def demander_retrait(data: dict, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    from config import supabase, SECRET_KEY, ALGORITHM
+    payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    user_id = payload.get("sub")
+    user = supabase.table("users").select("solde").eq("id", user_id).execute()
+    solde = user.data[0]["solde"]
+    montant = data.get("montant", 0)
+    if montant > solde:
+        raise HTTPException(400, "Solde insuffisant")
+    tx = supabase.table("transactions").insert({
+        "user_id": user_id,
+        "type": "retrait",
+        "montant": montant,
+        "methode": data.get("methode",""),
+        "numero_envoi": data.get("telephone",""),
+        "statut": "en_attente"
+    }).execute()
+    return {"message": "Retrait demandé", "id": tx.data[0]["id"]}

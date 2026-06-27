@@ -161,7 +161,14 @@ async function doLogin(){
   btn.innerHTML='⏳ Connexion...';
   const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telephone:tel,password:pwd})});
   const d=await r.json();
-  if(r.ok){localStorage.setItem('token',d.token);window.location.href='/dashboard';}
+  if(r.ok){
+    localStorage.setItem('token',d.token);
+    if(d.user){
+      localStorage.setItem('user_nom',d.user.nom||'');
+      localStorage.setItem('user_solde',d.user.solde||0);
+    }
+    window.location.href='/dashboard';
+  }
   else{alert(d.detail||'Erreur connexion');btn.innerHTML='⚡ SE CONNECTER';}
 }
 async function doRegister(){
@@ -171,7 +178,13 @@ async function doRegister(){
   const body={nom:document.getElementById('rname').value,telephone:document.getElementById('rtel').value,password:document.getElementById('rp1').value,referral:document.getElementById('rref').value};
   const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const d=await r.json();
-  if(r.ok){localStorage.setItem('token',d.token);window.location.href='/dashboard';}
+  if(r.ok){
+    localStorage.setItem('token',d.token);
+    localStorage.setItem('user_nom',document.getElementById('rname').value||'');
+    localStorage.setItem('user_tel',document.getElementById('rtel').value||'');
+    localStorage.setItem('roue_done','');
+    window.location.href='/dashboard';
+  }
   else{alert(d.detail||'Erreur inscription');btn.innerHTML='⚡ S\'INSCRIRE MAINTENANT';}
 }
 const notifs=[
