@@ -208,3 +208,4 @@ async def investir(data: dict, credentials: HTTPAuthorizationCredentials = Depen
         "note": data.get("plan_nom", "")
     }).execute()
     return {"message": "Investissement confirmé", "nouveau_solde": nouveau_solde}
+
