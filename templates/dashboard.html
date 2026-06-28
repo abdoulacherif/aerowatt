@@ -239,7 +239,43 @@ function renderPlans(){
       <button class="plan-invest-btn ${bc}">${bt}</button></div></div>`;
   });
 }
-renderPlans();
+const SUPABASE_URL2='https://qybvdpxtermlmgpgqaqt.supabase.co';
+const SUPABASE_KEY2='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
+
+async function loadDashboard(){
+  const token=localStorage.getItem('token');
+  if(!token){location.href='/';return;}
+  try{
+    const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
+    if(r.status===401){localStorage.clear();location.href='/';return;}
+    if(r.ok){
+      const u=await r.json();
+      document.getElementById('solde-display').textContent=(u.solde||0).toLocaleString();
+      localStorage.setItem('user_nom',u.nom||'');
+      localStorage.setItem('user_solde',u.solde||0);
+      localStorage.setItem('user_code',u.mon_code||'');
+      if(!u.roue_fait&&!localStorage.getItem('roue_done')){
+        document.getElementById('roue-overlay').classList.add('show');
+      }
+    }
+    // Plans depuis Supabase
+    const rp=await fetch(SUPABASE_URL2+'/rest/v1/plans?order=prix',{
+      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2}
+    });
+    const plans=await rp.json();
+    if(plans&&plans.length){
+      CONFIG.plans=plans.map(p=>({
+        id:p.id,nom:p.nom,prix:p.prix,cycle:p.cycle_jours,
+        dispo:p.slots_dispo,total:p.slots_total,
+        quotidien:p.revenu_quotidien,totalRevenu:p.revenu_total,
+        img:p.image_url,style:p.style,ouvert:p.ouvert
+      }));
+    }
+  }catch(e){console.log('offline:',e);}
+  renderPlans();
+}
+
+loadDashboard();
 
 // Charger solde depuis Supabase
 async function loadUserData(){
@@ -274,6 +310,40 @@ function openModal(id){
 function setQty(q){currentQty=q;document.querySelectorAll('.qty-btn').forEach((b,i)=>b.classList.toggle('active',i+1===q));updateRecap();}
 function updateRecap(){const p=currentPlan;document.getElementById('m-daily').textContent=(p.quotidien*currentQty).toLocaleString()+' XAF';document.getElementById('m-total').textContent=(p.totalRevenu*currentQty).toLocaleString()+' XAF';document.getElementById('m-dispo').textContent=p.dispo+'/'+p.total;document.getElementById('m-payer').textContent=(p.prix*currentQty).toLocaleString()+' XAF';}
 function closeModal(){document.getElementById('modal-ov').classList.remove('show');}
+
+async function confirmerInvestissement(){
+  const token=localStorage.getItem('token');
+  if(!token){location.href='/';return;}
+  if(!currentPlan){closeModal();return;}
+  const btn=document.getElementById('m-invest-btn');
+  btn.textContent='Traitement...';btn.disabled=true;
+  try{
+    const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
+    const u=await r.json();
+    if((u.solde||0)<currentPlan.prix){
+      alert('Solde insuffisant ! Faites un dépôt.');
+      btn.textContent='Investir Maintenant';btn.disabled=false;
+      return;
+    }
+    const r2=await fetch('/api/investir',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        plan_id:currentPlan.id,
+        plan_nom:currentPlan.nom,
+        montant:currentPlan.prix,
+        revenu_quotidien:currentPlan.quotidien,
+        revenu_total:currentPlan.totalRevenu,
+        cycle_jours:currentPlan.cycle
+      })
+    });
+    const d=await r2.json();
+    if(!r2.ok){alert(d.detail||'Erreur');btn.textContent='Investir Maintenant';btn.disabled=false;return;}
+    closeModal();
+    document.getElementById('solde-display').textContent=(d.nouveau_solde||0).toLocaleString();
+    alert('✅ Investissement confirmé !');
+  }catch(e){alert('Erreur. Réessayez.');btn.textContent='Investir Maintenant';btn.disabled=false;}
+}
 const segs=[{l:'334',c:'#FF6B00'},{l:'0',c:'#0D1827'},{l:'333',c:'#0066FF'},{l:'0',c:'#00B4CC'},{l:'333',c:'#FF9A3C'},{l:'0',c:'#0D1827'},{l:'0',c:'#00B86B'},{l:'0',c:'#0066FF'}];
 const N=segs.length,arc=2*Math.PI/N;
 let wAngle=0,toursLeft=3,totalGain=0,spinning=false,gainIdx=0;
