@@ -92,10 +92,20 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
 .user-name{font-size:13px;font-weight:800;color:#fff}
 .user-tel{font-size:11px;color:var(--muted)}
 .user-solde{margin-left:auto;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--cyan)}
-.user-actions{display:flex;gap:8px}
+.user-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* NOTIF CARD */
 .notif-admin{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;margin-bottom:10px}
+
+/* USER DETAIL MODAL */
+.udetail-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:600;align-items:flex-end;justify-content:center}
+.udetail-ov.show{display:flex}
+.udetail-box{background:#0D1827;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto;border-top:1px solid rgba(0,229,255,0.2)}
+.udetail-row{margin-bottom:10px}
+.udetail-field-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:block}
+.udetail-input{width:100%;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;outline:none}
+.udetail-input:disabled{opacity:.5}
+.udetail-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
 
 /* TOAST */
 .toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
@@ -350,6 +360,16 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
   </div>
 </div>
 
+<!-- DÉTAIL UTILISATEUR (édition complète) -->
+<div class="udetail-ov" id="udetail-ov" onclick="if(event.target===this)fermerDetailUser()">
+  <div class="udetail-box">
+    <button class="udetail-close" onclick="fermerDetailUser()">✕</button>
+    <div class="admin-section-title">👤 Détails utilisateur</div>
+    <div id="udetail-fields"><div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div></div>
+    <button class="btn-save btn-green" onclick="sauvegarderDetailUser()">💾 Enregistrer les modifications</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -357,6 +377,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
 const SUPABASE_URL = 'https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 const ADMIN_TEL = '651461777';
+const ADMIN_PASS = 'CHANGE_MOI_123'; // ⚠️ change ce mot de passe avant de déployer
 
 // ── SUPABASE HELPER ──
 async function sb(table, method='GET', body=null, filter='') {
@@ -380,8 +401,10 @@ async function sb(table, method='GET', body=null, filter='') {
 function loginAdmin() {
   const tel = document.getElementById('admin-tel').value.replace(/\s/g,'');
   const pass = document.getElementById('admin-pass').value;
-  if(tel === ADMIN_TEL || tel === '651461777') {
+  if(tel === ADMIN_TEL && pass === ADMIN_PASS) {
     document.getElementById('login-screen').style.display = 'none';
+    sessionStorage.setItem('admin_session', '1');
+    document.getElementById('login-error').style.display = 'none';
     loadAll();
   } else {
     document.getElementById('login-error').style.display = 'block';
@@ -389,7 +412,14 @@ function loginAdmin() {
 }
 
 function logout() {
+  sessionStorage.removeItem('admin_session');
   document.getElementById('login-screen').style.display = 'flex';
+}
+
+// Reste connecté si une session admin est déjà active dans cet onglet
+if(sessionStorage.getItem('admin_session') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  loadAll();
 }
 
 // ── TABS ──
@@ -500,9 +530,12 @@ async function rejeterTx(txId) {
 }
 
 // ── UTILISATEURS ──
+let lastUsersList = [];
+
 async function loadUsers() {
   try {
     const users = await sb('users','GET',null,'?order=created_at.desc&limit=50');
+    lastUsersList = users;
     renderUsers(users);
   } catch(e){}
 }
@@ -518,6 +551,7 @@ function renderUsers(users) {
     </div>
     <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px">Code: ${u.mon_code||'—'} · ${new Date(u.created_at).toLocaleDateString('fr')}</div>
     <div class="user-actions">
+      <button class="btn-sm" style="background:rgba(0,184,107,0.2);color:var(--green)" onclick="voirDetailUser('${u.id}')">📋 Détails</button>
       <button class="btn-sm" style="background:rgba(0,102,255,0.2);color:var(--cyan)" onclick="copierUID('${u.id}')">Copier ID</button>
       <button class="btn-sm btn-red" style="font-size:11px" onclick="bloquerUser('${u.id}',${!u.actif})">${u.actif?'Bloquer':'Débloquer'}</button>
     </div>
@@ -546,6 +580,70 @@ async function modifierSolde() {
   await sb('users','PATCH',{solde:val},`?id=eq.${uid}`);
   showToast('✅ Solde modifié : '+val.toLocaleString()+' XAF');
   loadUsers();
+}
+
+// ── DÉTAIL / ÉDITION COMPLÈTE D'UN UTILISATEUR ──
+let currentUserDetail = null;
+const UDETAIL_READONLY = ['id','created_at','updated_at'];
+
+async function voirDetailUser(id) {
+  try {
+    document.getElementById('udetail-fields').innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div>';
+    document.getElementById('udetail-ov').classList.add('show');
+    const rows = await sb('users','GET',null,`?id=eq.${id}`);
+    if(!rows.length){ showToast('Utilisateur introuvable', true); fermerDetailUser(); return; }
+    currentUserDetail = rows[0];
+    renderUserDetailFields();
+  } catch(e) { showToast('Erreur chargement utilisateur', true); fermerDetailUser(); }
+}
+
+function renderUserDetailFields() {
+  const c = document.getElementById('udetail-fields');
+  c.innerHTML = Object.keys(currentUserDetail).map(key=>{
+    const val = currentUserDetail[key];
+    const readonly = UDETAIL_READONLY.includes(key);
+    if(typeof val === 'boolean') {
+      return `<div class="udetail-row">
+        <label class="udetail-field-label">${key}</label>
+        <select class="udetail-input" id="uf-${key}" ${readonly?'disabled':''}>
+          <option value="true" ${val?'selected':''}>true</option>
+          <option value="false" ${!val?'selected':''}>false</option>
+        </select>
+      </div>`;
+    }
+    const inputType = typeof val === 'number' ? 'number' : 'text';
+    return `<div class="udetail-row">
+      <label class="udetail-field-label">${key}</label>
+      <input class="udetail-input" id="uf-${key}" type="${inputType}" value="${val===null||val===undefined?'':val}" ${readonly?'disabled':''}>
+    </div>`;
+  }).join('');
+}
+
+function fermerDetailUser() {
+  document.getElementById('udetail-ov').classList.remove('show');
+  currentUserDetail = null;
+}
+
+async function sauvegarderDetailUser() {
+  if(!currentUserDetail) return;
+  const updates = {};
+  Object.keys(currentUserDetail).forEach(key=>{
+    if(UDETAIL_READONLY.includes(key)) return;
+    const el = document.getElementById('uf-'+key);
+    if(!el) return;
+    const orig = currentUserDetail[key];
+    let newVal = el.value;
+    if(typeof orig === 'number') newVal = newVal===''?null:Number(newVal);
+    else if(typeof orig === 'boolean') newVal = newVal==='true';
+    else if(newVal==='') newVal = null;
+    updates[key] = newVal;
+  });
+  try {
+    await sb('users','PATCH',updates,`?id=eq.${currentUserDetail.id}`);
+    showToast('✅ Utilisateur mis à jour');
+    fermerDetailUser();
+    loadUsers();
+  } catch(e) { showToast('Erreur sauvegarde: '+e.message, true); }
 }
 
 // ── PLANS ──
