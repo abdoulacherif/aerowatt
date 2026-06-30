@@ -34,7 +34,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .ir{display:flex;align-items:center;background:var(--bg);border:1.5px solid var(--border);border-radius:13px;padding:0 14px;transition:border-color .25s,box-shadow .25s}
 .ir:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,0.1);background:#fff}
 .ii{font-size:17px;margin-right:10px;flex-shrink:0}
-.csel{background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--black);padding:14px 6px 14px 0;border-right:1.5px solid var(--border);margin-right:10px;cursor:pointer;flex-shrink:0}
+.csel{background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--black);padding:14px 6px 14px 0;border-right:1.5px solid var(--border);margin-right:10px;cursor:pointer;flex-shrink:0;max-width:108px}
 .ifield{flex:1;background:none;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:15px;color:var(--black);padding:14px 0}
 .ifield::placeholder{color:#C0CEDF}
 .eye{background:none;border:none;font-size:17px;cursor:pointer;color:var(--muted)}
@@ -50,6 +50,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .btn-login{background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 8px 28px rgba(0,102,255,0.4)}
 .btn-reg{background:linear-gradient(135deg,var(--orange),var(--orange2));box-shadow:0 8px 28px rgba(255,107,0,0.4)}
 .btn-main:active{transform:scale(0.97)}
+.btn-main:disabled{opacity:.6;cursor:not-allowed}
 .already{text-align:center;margin-top:12px;font-size:13px;color:var(--muted)}
 .already a{color:var(--blue);font-weight:700;text-decoration:none}
 .bonus{margin:14px 16px 0;background:linear-gradient(135deg,var(--black),#0D1827);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;border:1px solid rgba(0,229,255,0.15)}
@@ -101,7 +102,20 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   <div class="fg">
     <div class="ir">
       <span class="ii">📱</span>
-      <select class="csel"><option>🇹🇩 +235</option><option>🇧🇯 +229</option><option>🇹🇬 +228</option><option>🇧🇫 +226</option><option>🇸🇳 +221</option><option>🇲🇱 +223</option><option>🇨🇮 +225</option></select>
+      <select class="csel">
+        <option value="+235">🇹🇩 +235</option>
+        <option value="+237">🇨🇲 +237</option>
+        <option value="+228">🇹🇬 +228</option>
+        <option value="+229">🇧🇯 +229</option>
+        <option value="+223">🇲🇱 +223</option>
+        <option value="+226">🇧🇫 +226</option>
+        <option value="+225">🇨🇮 +225</option>
+        <option value="+243">🇨🇩 +243</option>
+        <option value="+241">🇬🇦 +241</option>
+        <option value="+227">🇳🇪 +227</option>
+        <option value="+234">🇳🇬 +234</option>
+        <option value="+221">🇸🇳 +221</option>
+      </select>
       <input class="ifield" type="tel" placeholder="Numéro de téléphone" id="ltel">
     </div>
     <div class="ir">
@@ -125,7 +139,20 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     <div class="ir"><span class="ii">👤</span><input class="ifield" type="text" placeholder="Prénom & Nom complet" id="rname"></div>
     <div class="ir">
       <span class="ii">📱</span>
-      <select class="csel"><option>🇹🇩 +235</option><option>🇧🇯 +229</option><option>🇹🇬 +228</option><option>🇧🇫 +226</option><option>🇸🇳 +221</option><option>🇲🇱 +223</option><option>🇨🇮 +225</option></select>
+      <select class="csel">
+        <option value="+235">🇹🇩 +235</option>
+        <option value="+237">🇨🇲 +237</option>
+        <option value="+228">🇹🇬 +228</option>
+        <option value="+229">🇧🇯 +229</option>
+        <option value="+223">🇲🇱 +223</option>
+        <option value="+226">🇧🇫 +226</option>
+        <option value="+225">🇨🇮 +225</option>
+        <option value="+243">🇨🇩 +243</option>
+        <option value="+241">🇬🇦 +241</option>
+        <option value="+227">🇳🇪 +227</option>
+        <option value="+234">🇳🇬 +234</option>
+        <option value="+221">🇸🇳 +221</option>
+      </select>
       <input class="ifield" type="tel" placeholder="Numéro de téléphone" id="rtel">
     </div>
     <div class="ir"><span class="ii">🔒</span><input class="ifield" type="password" placeholder="Créer un mot de passe" id="rp1"><button class="eye" onclick="tog('rp1',this)">👁</button></div>
@@ -153,40 +180,73 @@ function sw(t){
   document.getElementById('panel-register').classList.toggle('active',t==='register');
 }
 function tog(id,btn){const el=document.getElementById(id);el.type=el.type==='password'?'text':'password';btn.textContent=el.type==='password'?'👁':'🙈';}
-async function doLogin(){
-  const tel=document.getElementById('ltel').value;
-  const pwd=document.getElementById('lpass').value;
-  if(!tel||!pwd){alert('Remplissez tous les champs');return;}
-  const btn=document.querySelector('#panel-login .btn-main');
-  btn.innerHTML='⏳ Connexion...';
-  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telephone:tel,password:pwd})});
-  const d=await r.json();
-  if(r.ok){
-    localStorage.setItem('token',d.token);
-    if(d.user){
-      localStorage.setItem('user_nom',d.user.nom||'');
-      localStorage.setItem('user_solde',d.user.solde||0);
-    }
-    window.location.href='/dashboard';
-  }
-  else{alert(d.detail||'Erreur connexion');btn.innerHTML='⚡ SE CONNECTER';}
+
+// Combine l'indicatif pays sélectionné + le numéro saisi en un seul numéro complet
+function buildPhone(panelSelector, telInputId){
+  const select = document.querySelector(panelSelector+' .csel');
+  const dial = select.value;
+  let local = document.getElementById(telInputId).value.trim().replace(/[\s.-]/g,'');
+  if(local.startsWith('0')) local = local.slice(1);
+  return dial + local;
 }
+
+async function doLogin(){
+  const tel = buildPhone('#panel-login','ltel');
+  const pwd = document.getElementById('lpass').value;
+  if(!document.getElementById('ltel').value.trim() || !pwd){alert('Remplissez tous les champs');return;}
+  const btn=document.querySelector('#panel-login .btn-main');
+  const original = btn.innerHTML;
+  btn.innerHTML='⏳ Connexion...'; btn.disabled = true;
+  try {
+    const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telephone:tel,password:pwd})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok){
+      localStorage.setItem('token',d.token);
+      if(d.user){
+        localStorage.setItem('user_nom',d.user.nom||'');
+        localStorage.setItem('user_solde',d.user.solde||0);
+      }
+      window.location.href='/dashboard';
+      return;
+    } else {
+      alert(d.detail || 'Erreur connexion');
+    }
+  } catch(e){
+    alert('Erreur réseau. Réessayez.');
+  }
+  btn.innerHTML = original; btn.disabled = false;
+}
+
 async function doRegister(){
   if(!document.getElementById('terms').checked){alert('Acceptez les conditions');return;}
+  const p1 = document.getElementById('rp1').value;
+  const p2 = document.getElementById('rp2').value;
+  if(!document.getElementById('rname').value.trim() || !document.getElementById('rtel').value.trim() || !p1){alert('Remplissez tous les champs');return;}
+  if(p1 !== p2){alert('Les mots de passe ne correspondent pas');return;}
+  const tel = buildPhone('#panel-register','rtel');
   const btn=document.querySelector('#panel-register .btn-main');
-  btn.innerHTML='⏳ Création...';
-  const body={nom:document.getElementById('rname').value,telephone:document.getElementById('rtel').value,password:document.getElementById('rp1').value,referral:document.getElementById('rref').value};
-  const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const d=await r.json();
-  if(r.ok){
-    localStorage.setItem('token',d.token);
-    localStorage.setItem('user_nom',document.getElementById('rname').value||'');
-    localStorage.setItem('user_tel',document.getElementById('rtel').value||'');
-    localStorage.setItem('roue_done','');
-    window.location.href='/dashboard';
+  const original = btn.innerHTML;
+  btn.innerHTML='⏳ Création...'; btn.disabled = true;
+  const body={nom:document.getElementById('rname').value,telephone:tel,password:p1,referral:document.getElementById('rref').value};
+  try {
+    const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok){
+      localStorage.setItem('token',d.token);
+      localStorage.setItem('user_nom',document.getElementById('rname').value||'');
+      localStorage.setItem('user_tel',tel||'');
+      localStorage.setItem('roue_done','');
+      window.location.href='/dashboard';
+      return;
+    } else {
+      alert(d.detail || 'Erreur inscription');
+    }
+  } catch(e){
+    alert('Erreur réseau. Réessayez.');
   }
-  else{alert(d.detail||'Erreur inscription');btn.innerHTML='⚡ S\'INSCRIRE MAINTENANT';}
+  btn.innerHTML = original; btn.disabled = false;
 }
+
 const notifs=[
   {u:'@74****228',m:'💸 80,000 XAF Retrait réussi',t:'23 secondes'},
   {u:'@91****043',m:'⚡ Dépôt 50,000 XAF confirmé',t:'1 minute'},
