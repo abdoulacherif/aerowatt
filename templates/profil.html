@@ -57,7 +57,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   </div>
   <div class="user-name" id="user-name">Utilisateur</div>
   <div class="user-tel" id="user-tel">+235 XX XX XX XX</div>
-  <div class="user-since">Membre depuis Juin 2026</div>
+  <div class="user-since" id="user-since">Membre depuis —</div>
 </div>
 <div class="stats-grid">
   <div class="stat-box"><div class="stat-box-val" style="color:var(--blue)" id="stat-solde">0</div><div class="stat-box-lbl">Solde XAF</div></div>
@@ -118,30 +118,47 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </div>
 <script>
 const token=localStorage.getItem('token');
+
 async function init(){
   if(!token){ location.href='/'; return; }
   try {
     const r = await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
     if(!r.ok){ localStorage.clear(); location.href='/'; return; }
     const u = await r.json();
-    const nom = u.nom||'Utilisateur';
-    const tel = u.telephone||'+235 XX XX XX';
-    const code = u.mon_code||'AW-000000';
-    const solde = u.solde||0;
+    const nom = u.nom || 'Utilisateur';
+    const tel = u.telephone || '+235 XX XX XX';
+    const code = u.mon_code || 'AW-000000';
+    const solde = u.solde || 0;
+
     document.getElementById('stat-solde').textContent = solde.toLocaleString();
-  document.getElementById('user-name').textContent=nom;
-  document.getElementById('user-tel').textContent=tel;
-  document.getElementById('avatar-initials').textContent=nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)||'AW';
-  document.getElementById('info-nom').textContent=nom;
-  document.getElementById('info-tel').textContent=tel;
-  document.getElementById('info-code').textContent=code;
+    document.getElementById('user-name').textContent = nom;
+    document.getElementById('user-tel').textContent = tel;
+    document.getElementById('avatar-initials').textContent = nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) || 'AW';
+    document.getElementById('info-nom').textContent = nom;
+    document.getElementById('info-tel').textContent = tel;
+    document.getElementById('info-code').textContent = code;
+
+    if(u.created_at){
+      const d = new Date(u.created_at);
+      const mois = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      document.getElementById('user-since').textContent = 'Membre depuis '+mois[d.getMonth()]+' '+d.getFullYear();
+    }
+
+    // Gains totaux et filleuls : à brancher selon ton schéma (voir note ci-dessous)
+    // document.getElementById('stat-gains').textContent = ...
+    // document.getElementById('stat-filleuls').textContent = ...
+  } catch(e) {
+    console.log('Erreur chargement profil:', e);
+  }
 }
+
 function deconnexion(){
   if(confirm('Voulez-vous vraiment vous déconnecter ?')){
     localStorage.clear();
     location.href='/';
   }
 }
+
 init();
 </script>
 </body>
