@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--dark:#0D1827;--white:#fff;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8;--green:#00B86B}
+:root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--dark:#0D1827;--white:#fff;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8;--green:#00B86B;--red:#FF3B30}
 body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:80px}
 .top-bar{background:linear-gradient(135deg,var(--dark),#0A1E3A);padding:16px 18px;display:flex;align-items:center;gap:12px}
 .top-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;flex:1;text-align:center}
@@ -39,11 +39,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .method-logo{font-size:22px;margin-bottom:4px}
 .method-name{font-size:11px;font-weight:800;color:var(--black)}
 .method-num{font-size:10px;color:var(--muted);margin-top:2px}
-.submit-btn{width:100%;padding:15px;border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn{width:100%;padding:15px;border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-orange{background:linear-gradient(135deg,var(--orange),var(--orange2));box-shadow:0 6px 20px rgba(255,107,0,0.35)}
 .btn-blue{background:linear-gradient(135deg,var(--blue),var(--cyan));box-shadow:0 6px 20px rgba(0,102,255,0.3)}
 .info-box{margin-top:14px;background:var(--bg);border-radius:12px;padding:12px 14px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6}
 .info-box strong{color:var(--black)}
+.lock-box{display:none;background:rgba(255,59,48,0.07);border:1.5px solid rgba(255,59,48,0.25);border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:#C0392B;line-height:1.6;font-weight:600}
 .hist-section{margin:0 16px}
 .hist-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:12px}
 .hist-item{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
@@ -164,6 +166,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <svg width="18" height="18" viewBox="0 0 24 24" fill="#0066FF"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
       Demander un retrait
     </div>
+    <div class="lock-box" id="retrait-lock-box">
+      🔒 Vous devez investir dans au moins un plan avant de pouvoir effectuer un retrait.
+    </div>
     <div class="form-group">
       <label class="form-label">Méthode de retrait</label>
       <div class="methods" id="retrait-methods">
@@ -193,7 +198,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <label class="form-label">Numéro de réception</label>
       <input type="tel" class="form-input" id="retrait-tel" placeholder="Numéro Mobile Money">
     </div>
-    <button class="submit-btn btn-blue" onclick="soumettreRetrait()">
+    <button class="submit-btn btn-blue" id="retrait-submit-btn" onclick="soumettreRetrait()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
       Demander le retrait
     </button>
@@ -201,7 +206,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <strong>Informations retrait :</strong><br>
       • Minimum : <strong>1,200 XAF</strong><br>
       • Traitement : <strong>5-60 minutes</strong><br>
-      • Disponible 24h/7j
+      • Disponible 24h/7j<br>
+      • Réservé aux investisseurs actifs
     </div>
   </div>
 </div>
@@ -245,6 +251,7 @@ let userID = '';
 let minDepot = 4000;
 let minRetrait = 1200;
 let numerosConfig = {};
+let hasInvested = false;
 
 // ── INIT ──
 async function init(){
@@ -257,6 +264,7 @@ async function init(){
     userSolde = u.solde||0;
     userID = u.id;
     document.getElementById('solde-val').textContent = userSolde.toLocaleString()+' XAF';
+
     // Config
     const cfg = await fetch(SUPABASE_URL+'/rest/v1/config',{
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
@@ -275,9 +283,39 @@ async function init(){
     document.getElementById('mtn-num').textContent = numerosConfig['MTN']||'—';
     document.getElementById('moov-num').textContent = numerosConfig['Moov']||'—';
     document.getElementById('info-num-depot').textContent = 'Orange Money ('+( numerosConfig['Orange Money']||'—')+')';
+
+    // Vérifie si l'utilisateur a déjà investi dans un plan (condition de retrait)
+    await checkInvestissement();
+
     // Historique auto
     loadHistorique();
   } catch(e){ console.log(e); }
+}
+
+// ── VÉRIFICATION INVESTISSEMENT (condition pour retirer) ──
+async function checkInvestissement(){
+  try {
+    const r = await fetch(SUPABASE_URL+'/rest/v1/investments?user_id=eq.'+userID+'&select=id&limit=1',{
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    const data = await r.json();
+    hasInvested = Array.isArray(data) && data.length > 0;
+  } catch(e) {
+    hasInvested = false;
+  }
+  updateRetraitLock();
+}
+
+function updateRetraitLock(){
+  const box = document.getElementById('retrait-lock-box');
+  const btn = document.getElementById('retrait-submit-btn');
+  if(!hasInvested){
+    box.style.display = 'block';
+    btn.disabled = true;
+  } else {
+    box.style.display = 'none';
+    btn.disabled = false;
+  }
 }
 
 // ── TABS ──
@@ -312,6 +350,7 @@ async function soumettreDépôt(){
   if(!tel){ showModal('⚠️','Champ manquant','Entrez votre numéro expéditeur'); return; }
   if(!ref){ showModal('⚠️','Champ manquant','Entrez la référence de transaction'); return; }
   const btn = document.querySelector('#panel-depot .submit-btn');
+  const btnHtml = btn.innerHTML;
   btn.textContent = 'Envoi...'; btn.disabled=true;
   try {
     const r = await fetch('/api/depot',{
@@ -319,36 +358,57 @@ async function soumettreDépôt(){
       headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
       body:JSON.stringify({montant,methode:selectedDepotMethod,telephone:tel,reference:ref})
     });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){
+      showModal('❌','Dépôt refusé', d.detail || d.error || 'Une erreur est survenue. Réessayez.');
+      btn.innerHTML = btnHtml; btn.disabled = false;
+      return;
+    }
     document.getElementById('depot-montant').value='';
     document.getElementById('depot-tel').value='';
     document.getElementById('depot-ref').value='';
     showModal('⏳','Dépôt soumis !',`Votre dépôt de ${montant.toLocaleString()} XAF via ${selectedDepotMethod} est en cours de validation (5-30 min).`);
-  } catch(e){ showModal('❌','Erreur','Réessayez plus tard.'); }
-  btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Soumettre le dépôt';
-  btn.disabled=false;
+  } catch(e){
+    showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
+  }
+  btn.innerHTML = btnHtml;
+  btn.disabled = false;
 }
 
 // ── RETRAIT ──
 async function soumettreRetrait(){
+  if(!hasInvested){
+    showModal('🔒','Retrait verrouillé','Vous devez investir dans au moins un plan avant de pouvoir retirer des fonds.');
+    return;
+  }
   const montant = parseInt(document.getElementById('retrait-montant').value);
   const tel = document.getElementById('retrait-tel').value.trim();
   if(!montant||montant<minRetrait){ showModal('⚠️','Montant insuffisant','Minimum de retrait : '+minRetrait.toLocaleString()+' XAF'); return; }
   if(montant>userSolde){ showModal('⚠️','Solde insuffisant','Votre solde est de '+userSolde.toLocaleString()+' XAF'); return; }
   if(!tel){ showModal('⚠️','Champ manquant','Entrez votre numéro de réception'); return; }
-  const btn = document.querySelector('#panel-retrait .submit-btn');
+  const btn = document.getElementById('retrait-submit-btn');
+  const btnHtml = btn.innerHTML;
   btn.textContent = 'Envoi...'; btn.disabled=true;
   try {
-    await fetch('/api/retrait',{
+    const r = await fetch('/api/retrait',{
       method:'POST',
       headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
       body:JSON.stringify({montant,methode:selectedRetraitMethod,telephone:tel})
     });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){
+      showModal('❌','Retrait refusé', d.detail || d.error || 'Une erreur est survenue. Réessayez.');
+      btn.innerHTML = btnHtml; btn.disabled = false;
+      return;
+    }
     document.getElementById('retrait-montant').value='';
     document.getElementById('retrait-tel').value='';
     showModal('✅','Retrait demandé !',`Votre retrait de ${montant.toLocaleString()} XAF vers ${selectedRetraitMethod} (${tel}) sera traité sous 5-60 minutes.`);
-  } catch(e){ showModal('❌','Erreur','Réessayez plus tard.'); }
-  btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Demander le retrait';
-  btn.disabled=false;
+  } catch(e){
+    showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
+  }
+  btn.innerHTML = btnHtml;
+  btn.disabled = false;
 }
 
 // ── HISTORIQUE ──
@@ -357,8 +417,9 @@ async function loadHistorique(){
   c.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">Chargement...</div>';
   try {
     const r = await fetch('/api/transactions',{headers:{'Authorization':'Bearer '+TOKEN}});
+    if(!r.ok){ c.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Erreur chargement historique</div>'; return; }
     const txs = await r.json();
-    if(!txs.length){ c.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Aucune transaction</div>'; return; }
+    if(!Array.isArray(txs) || !txs.length){ c.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Aucune transaction</div>'; return; }
     c.innerHTML = txs.map(t=>{
       const isDepot = t.type==='depot';
       const color = isDepot?'var(--green)':'var(--orange)';
