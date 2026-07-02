@@ -387,22 +387,30 @@ async function creditGainRoue(gain){
   }catch(e){ console.log('Erreur crédit roue:', e); }
 }
 
-function updateTours(){[1,2,3].forEach(i=>document.getElementById('d'+i).className='t-dot'+(i>toursLeft?' used':''));document.getElementById('t-label').textContent=toursLeft>0?`${toursLeft} tour${toursLeft>1?'s':''} restant${toursLeft>1?'s':''}`:'Tours terminés !';if(toursLeft===0){const b=document.getElementById('spin-btn');b.disabled=true;b.textContent='Tours terminés';document.getElementById('close-roue-btn').classList.add('show');}else{document.getElementById('spin-btn').disabled=false;}}
+function updateTours(){[1,2,3].forEach(i=>document.getElementById('d'+i).className='t-dot'+(i>toursLeft?' used':''));document.getElementById('t-label').textContent=toursLeft>0?`${toursLeft} tour${toursLeft>1?'s':''} restant${toursLeft>1?'s':''}`:'Tours terminés !';if(toursLeft===0){const b=document.getElementById('spin-btn');b.disabled=true;b.textContent='Tours terminés';document.getElementById('close-roue-btn').classList.add('show');persisterRoueFait();}else{document.getElementById('spin-btn').disabled=false;}}
+
+// Sauvegarde roue_fait dès la fin du 3e tour, SANS attendre le clic sur "Aller au Dashboard"
+// (corrige le bug : la roue réapparaissait si l'utilisateur fermait la page avant de cliquer ce bouton)
+let roueFaitPersiste = false;
+async function persisterRoueFait(){
+  if(roueFaitPersiste || !currentUser.id) return;
+  roueFaitPersiste = true;
+  localStorage.setItem('roue_done','1');
+  try{
+    await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json'},
+      body:JSON.stringify({roue_fait:true})
+    });
+  }catch(e){ console.log('Erreur sauvegarde roue_fait:', e); }
+}
 function showGainMsg(g){const el=document.getElementById('gain-anim');const manque=Math.max(0,CONFIG.minRetrait-(currentUser.solde||0));if(toursLeft>0){el.className='gain-anim win';document.getElementById('gain-big').textContent='+'+g+' XAF';document.getElementById('gain-big').style.color='var(--green)';document.getElementById('gain-txt').textContent=`Ajouté à ton solde ! Il te reste ${toursLeft} tour${toursLeft>1?'s':''}.`;}else{el.className='gain-anim warning';document.getElementById('gain-big').textContent='Total gagné : '+totalGain+' XAF';document.getElementById('gain-big').style.color='var(--orange)';document.getElementById('gain-txt').innerHTML= manque>0 ? `Il te manque <strong style="color:var(--orange)">${manque.toLocaleString()} XAF</strong> pour atteindre le minimum de retrait (${CONFIG.minRetrait.toLocaleString()} XAF).` : `Tu peux maintenant effectuer un retrait !`;}}
 
-// Marque la roue comme terminée localement ET sur le serveur (empêche de la rejouer en vidant le cache)
-async function closeRoue(){
+// La sauvegarde (localStorage + Supabase) est déjà faite par persisterRoueFait() dès la fin du 3e tour.
+// Ce bouton ne fait donc plus que fermer visuellement la fenêtre.
+function closeRoue(){
   localStorage.setItem('roue_done','1');
   document.getElementById('roue-overlay').classList.remove('show');
-  if(currentUser.id){
-    try{
-      await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
-        method:'PATCH',
-        headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json'},
-        body:JSON.stringify({roue_fait:true})
-      });
-    }catch(e){ console.log('Erreur sauvegarde roue_fait:', e); }
-  }
 }
 </script>
 </body>
