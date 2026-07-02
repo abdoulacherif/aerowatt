@@ -103,6 +103,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .modal-recap-val{font-weight:800;color:var(--black)}
 .modal-recap-val.highlight{color:var(--green);font-size:15px}
 .modal-confirm-btn{width:100%;padding:16px;border:none;border-radius:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.5px}
+.modal-confirm-btn:disabled{opacity:.6;cursor:not-allowed}
 .modal-note{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6}
 
 /* NAVBAR */
@@ -314,17 +315,21 @@ const PLANS = {
 };
 
 let currentPlan = null;
+let currentUserId = null;
+let currentUserSolde = 0;
 
 async function loadRevenu(){
   if(!TOKEN){ location.href='/'; return; }
   try {
     const r = await fetch('/api/me',{headers:{'Authorization':'Bearer '+TOKEN}});
-    if(r.ok){
-      const u = await r.json();
-      document.getElementById('solde-val').textContent = (u.solde||0).toLocaleString()+' XAF';
-    }
-    // Charger investissements actifs
-    const inv = await fetch(SUPABASE_URL+'/rest/v1/investments?actif=eq.true&order=date_debut.desc',{
+    if(!r.ok){ localStorage.clear(); location.href='/'; return; }
+    const u = await r.json();
+    currentUserId = u.id;
+    currentUserSolde = u.solde||0;
+    document.getElementById('solde-val').textContent = currentUserSolde.toLocaleString()+' XAF';
+
+    // Charger UNIQUEMENT les investissements actifs DE CET UTILISATEUR (bug corrigé : filtre user_id ajouté)
+    const inv = await fetch(SUPABASE_URL+'/rest/v1/investments?user_id=eq.'+u.id+'&actif=eq.true&order=date_debut.desc',{
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
     const invData = await inv.json();
@@ -341,7 +346,6 @@ function renderActifs(list){
   }
   c.innerHTML = list.map(inv=>{
     const debut = new Date(inv.date_debut);
-    const fin = new Date(inv.date_fin||inv.date_debut);
     const now = new Date();
     const joursTotal = inv.cycle_jours;
     const joursPasses = Math.min(Math.floor((now-debut)/(1000*60*60*24)), joursTotal);
@@ -384,23 +388,25 @@ function openModal(planKey){
 function closeModal(){ document.getElementById('modal-ov').classList.remove('show'); }
 
 async function confirmerInvestissement(){
-  if(!currentPlan){ return; }
+  if(!currentPlan || !currentUserId){ return; }
   const btn = document.getElementById('m-btn');
+  const btnOriginal = btn.textContent;
   btn.textContent = 'Traitement...';
   btn.disabled = true;
   try {
+    // Re-vérifier le solde à jour (évite d'utiliser une valeur potentiellement obsolète)
     const r = await fetch('/api/me',{headers:{'Authorization':'Bearer '+TOKEN}});
     const u = await r.json();
     if((u.solde||0) < currentPlan.prix){
       showToast('Solde insuffisant ! Faites un dépôt.');
-      btn.textContent = "Confirmer l'investissement";
+      btn.textContent = btnOriginal;
       btn.disabled = false;
       return;
     }
-    // Créer investissement
+    // Créer investissement (bien lié à user_id)
     const dateFin = new Date();
     dateFin.setDate(dateFin.getDate()+20);
-    await fetch(SUPABASE_URL+'/rest/v1/investments',{
+    const invRes = await fetch(SUPABASE_URL+'/rest/v1/investments',{
       method:'POST',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({
@@ -411,30 +417,36 @@ async function confirmerInvestissement(){
         revenu_quotidien: currentPlan.jour,
         revenu_total: currentPlan.total,
         cycle_jours: 20,
+        date_debut: new Date().toISOString(),
         date_fin: dateFin.toISOString(),
         actif: true
       })
     });
+    if(!invRes.ok){ throw new Error('Échec création investissement'); }
+
     // Débiter le solde
-    await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+u.id,{
+    const patchRes = await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+u.id,{
       method:'PATCH',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({solde: (u.solde||0) - currentPlan.prix})
     });
-    // Transaction
+    if(!patchRes.ok){ throw new Error('Échec débit solde'); }
+
+    // Transaction (liée à user_id)
     await fetch(SUPABASE_URL+'/rest/v1/transactions',{
       method:'POST',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({user_id:u.id,type:'investissement',montant:currentPlan.prix,statut:'approuve',note:currentPlan.nom})
     });
+
     closeModal();
     showToast('✅ Investissement confirmé ! +'+currentPlan.jour.toLocaleString()+' XAF/jour');
     setTimeout(loadRevenu, 1000);
   } catch(e){
     showToast('Erreur. Réessayez.');
-    btn.textContent = "Confirmer l'investissement";
-    btn.disabled = false;
   }
+  btn.textContent = btnOriginal;
+  btn.disabled = false;
 }
 
 function showToast(msg){
