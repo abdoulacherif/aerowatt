@@ -88,6 +88,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .recap-val{font-weight:800;color:var(--black)}
 .recap-val.total{color:var(--orange);font-size:15px}
 .modal-invest-btn{width:100%;padding:16px;border:none;border-radius:16px;color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer}
+.modal-invest-btn:disabled{opacity:.6;cursor:not-allowed}
 .modal-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6;text-align:center}
 .navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 6px;gap:3px;cursor:pointer;text-decoration:none}
@@ -126,7 +127,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     </div>
     <div>
       <div class="solde-label">Solde (XAF)</div>
-      <div class="solde-row"><div class="solde-val" id="solde-display">1,000</div><span class="solde-xaf">XAF</span></div>
+      <div class="solde-row"><div class="solde-val" id="solde-display">—</div><span class="solde-xaf">XAF</span></div>
       <div class="hero-btns">
         <button class="hbtn hbtn-r" onclick="location.href='/wallet'"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>Retrait</button>
         <button class="hbtn hbtn-d" onclick="location.href='/wallet'"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>Dépôt</button>
@@ -159,10 +160,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 <div class="manque-card">
   <div class="manque-row">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF9A3C"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 18v4h6l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h6v-4l-2.28 1.7C7.81 18 6 15.21 6 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>
-    <div><div class="manque-title">Plus que <span style="color:var(--orange2)">200 XAF</span> pour retirer !</div><div class="manque-sub">Minimum de retrait : 1,200 XAF</div></div>
+    <div><div class="manque-title" id="manque-title">Plus que <span style="color:var(--orange2)" id="manque-diff">200 XAF</span> pour retirer !</div><div class="manque-sub" id="manque-sub">Minimum de retrait : 1,200 XAF</div></div>
   </div>
-  <div class="prog-bar"><div class="prog-fill" style="width:83%"></div></div>
-  <div class="prog-labels"><span>1,000 XAF</span><span>Min: 1,200 XAF</span></div>
+  <div class="prog-bar"><div class="prog-fill" id="manque-fill" style="width:0%"></div></div>
+  <div class="prog-labels"><span id="manque-solde">0 XAF</span><span>Min: 1,200 XAF</span></div>
   <button class="taches-btn" onclick="location.href='/revenu'"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>Voir les tâches disponibles</button>
 </div>
 <div class="plans-section">
@@ -216,7 +217,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   </div>
 </div>
 <script>
-const CONFIG={solde:1000,minRetrait:1200,plans:[
+const CONFIG={solde:0,minRetrait:1200,plans:[
   {id:1,nom:"Éolienne Découverte",prix:4000,cycle:5,dispo:1,total:1,quotidien:800,totalRevenu:4000,img:"https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400&q=80",style:"actif",ouvert:true},
   {id:2,nom:"Éolienne Starter",prix:15000,cycle:30,dispo:10,total:10,quotidien:1080,totalRevenu:32400,img:"https://images.unsplash.com/photo-1548337138-e87d889cc369?w=400&q=80",style:"actif",ouvert:true},
   {id:3,nom:"Éolienne Pro 200W",prix:120000,cycle:60,dispo:10,total:10,quotidien:7200,totalRevenu:432000,img:"https://images.unsplash.com/photo-1467533003447-e295ff1b0435?w=400&q=80",style:"fire",ouvert:true},
@@ -242,6 +243,24 @@ function renderPlans(){
 const SUPABASE_URL2='https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY2='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 
+// État global utilisateur (une seule source de vérité)
+let currentUser = { id: null, solde: 0, roue_fait: false };
+
+function updateSoldeDisplay(){
+  document.getElementById('solde-display').textContent = (currentUser.solde||0).toLocaleString();
+  const manque = Math.max(0, CONFIG.minRetrait - (currentUser.solde||0));
+  const pct = Math.min(100, Math.round(((currentUser.solde||0)/CONFIG.minRetrait)*100));
+  document.getElementById('manque-fill').style.width = pct+'%';
+  document.getElementById('manque-solde').textContent = (currentUser.solde||0).toLocaleString()+' XAF';
+  if(manque>0){
+    document.getElementById('manque-diff').textContent = manque.toLocaleString()+' XAF';
+    document.getElementById('manque-title').innerHTML = 'Plus que <span style="color:var(--orange2)">'+manque.toLocaleString()+' XAF</span> pour retirer !';
+  } else {
+    document.getElementById('manque-title').textContent = '✅ Vous pouvez retirer dès maintenant !';
+  }
+}
+
+// ── CHARGEMENT UNIQUE (fusion des deux fonctions dupliquées) ──
 async function loadDashboard(){
   const token=localStorage.getItem('token');
   if(!token){location.href='/';return;}
@@ -250,11 +269,15 @@ async function loadDashboard(){
     if(r.status===401){localStorage.clear();location.href='/';return;}
     if(r.ok){
       const u=await r.json();
-      document.getElementById('solde-display').textContent=(u.solde||0).toLocaleString();
+      currentUser.id = u.id;
+      currentUser.solde = u.solde||0;
+      currentUser.roue_fait = !!u.roue_fait;
+      updateSoldeDisplay();
       localStorage.setItem('user_nom',u.nom||'');
       localStorage.setItem('user_solde',u.solde||0);
       localStorage.setItem('user_code',u.mon_code||'');
-      if(!u.roue_fait&&!localStorage.getItem('roue_done')){
+      // La roue ne s'affiche que si ni le serveur ni le stockage local ne l'indiquent comme faite
+      if(!currentUser.roue_fait && !localStorage.getItem('roue_done')){
         document.getElementById('roue-overlay').classList.add('show');
       }
     }
@@ -277,23 +300,6 @@ async function loadDashboard(){
 
 loadDashboard();
 
-// Charger solde depuis Supabase
-async function loadUserData(){
-  const token = localStorage.getItem('token');
-  if(!token){ location.href='/'; return; }
-  try {
-    const r = await fetch('/api/me', {
-      headers: {'Authorization': 'Bearer '+token}
-    });
-    if(r.ok){
-      const d = await r.json();
-      document.getElementById('solde-display').textContent = d.solde.toLocaleString();
-      localStorage.setItem('user_nom', d.nom);
-      localStorage.setItem('user_solde', d.solde);
-    }
-  } catch(e){ console.log('offline mode'); }
-}
-loadUserData();
 let currentPlan=null,currentQty=1;
 function openModal(id){
   currentPlan=CONFIG.plans.find(p=>p.id===id);if(!currentPlan||!currentPlan.ouvert)return;
@@ -316,13 +322,20 @@ async function confirmerInvestissement(){
   if(!token){location.href='/';return;}
   if(!currentPlan){closeModal();return;}
   const btn=document.getElementById('m-invest-btn');
+  const btnOriginal = btn.textContent;
   btn.textContent='Traitement...';btn.disabled=true;
+
+  // Montants correctement multipliés par la quantité choisie (bug corrigé)
+  const montantTotal = currentPlan.prix * currentQty;
+  const revenuQuotidienTotal = currentPlan.quotidien * currentQty;
+  const revenuTotalTotal = currentPlan.totalRevenu * currentQty;
+
   try{
     const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
     const u=await r.json();
-    if((u.solde||0)<currentPlan.prix){
+    if((u.solde||0)<montantTotal){
       alert('Solde insuffisant ! Faites un dépôt.');
-      btn.textContent='Investir Maintenant';btn.disabled=false;
+      btn.textContent=btnOriginal;btn.disabled=false;
       return;
     }
     const r2=await fetch('/api/investir',{
@@ -331,19 +344,23 @@ async function confirmerInvestissement(){
       body:JSON.stringify({
         plan_id:currentPlan.id,
         plan_nom:currentPlan.nom,
-        montant:currentPlan.prix,
-        revenu_quotidien:currentPlan.quotidien,
-        revenu_total:currentPlan.totalRevenu,
+        quantite:currentQty,
+        montant:montantTotal,
+        revenu_quotidien:revenuQuotidienTotal,
+        revenu_total:revenuTotalTotal,
         cycle_jours:currentPlan.cycle
       })
     });
-    const d=await r2.json();
-    if(!r2.ok){alert(d.detail||'Erreur');btn.textContent='Investir Maintenant';btn.disabled=false;return;}
+    const d=await r2.json().catch(()=>({}));
+    if(!r2.ok){alert(d.detail||'Erreur');btn.textContent=btnOriginal;btn.disabled=false;return;}
     closeModal();
-    document.getElementById('solde-display').textContent=(d.nouveau_solde||0).toLocaleString();
+    currentUser.solde = d.nouveau_solde!=null ? d.nouveau_solde : (u.solde - montantTotal);
+    updateSoldeDisplay();
     alert('✅ Investissement confirmé !');
-  }catch(e){alert('Erreur. Réessayez.');btn.textContent='Investir Maintenant';btn.disabled=false;}
+  }catch(e){alert('Erreur. Réessayez.');btn.textContent=btnOriginal;btn.disabled=false;}
 }
+
+// ── ROUE DE LA CHANCE ──
 const segs=[{l:'334',c:'#FF6B00'},{l:'0',c:'#0D1827'},{l:'333',c:'#0066FF'},{l:'0',c:'#00B4CC'},{l:'333',c:'#FF9A3C'},{l:'0',c:'#0D1827'},{l:'0',c:'#00B86B'},{l:'0',c:'#0066FF'}];
 const N=segs.length,arc=2*Math.PI/N;
 let wAngle=0,toursLeft=3,totalGain=0,spinning=false,gainIdx=0;
@@ -352,11 +369,41 @@ const canvas=document.getElementById('wheel'),ctx=canvas.getContext('2d');
 function drawWheel(a){ctx.clearRect(0,0,210,210);const cx=105,cy=105,r=102;for(let i=0;i<N;i++){const s=a+i*arc,e=s+arc;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();ctx.fillStyle=segs[i].c;ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1.5;ctx.stroke();if(segs[i].l!=='0'){ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold 12px Orbitron,monospace';ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=3;ctx.fillText(segs[i].l,r-8,5);ctx.restore();}}ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=3;ctx.stroke();}
 drawWheel(0);
 const winSegs=[0,2,4];
-function spinWheel(){if(spinning||toursLeft===0)return;spinning=true;document.getElementById('spin-btn').disabled=true;document.getElementById('gain-anim').className='gain-anim';const tSeg=winSegs[gainIdx];const tAngle=2*Math.PI-tSeg*arc-arc/2;const totalRot=2*Math.PI*7+tAngle-((wAngle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);const dur=4500,start=performance.now(),startA=wAngle;function anim(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,4);wAngle=startA+totalRot*e;drawWheel(wAngle);if(p<1){requestAnimationFrame(anim);return;}spinning=false;toursLeft--;const g=gains[gainIdx];gainIdx++;totalGain+=g;updateTours();showGainMsg(g);}requestAnimationFrame(anim);}
+function spinWheel(){if(spinning||toursLeft===0)return;spinning=true;document.getElementById('spin-btn').disabled=true;document.getElementById('gain-anim').className='gain-anim';const tSeg=winSegs[gainIdx];const tAngle=2*Math.PI-tSeg*arc-arc/2;const totalRot=2*Math.PI*7+tAngle-((wAngle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);const dur=4500,start=performance.now(),startA=wAngle;function anim(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,4);wAngle=startA+totalRot*e;drawWheel(wAngle);if(p<1){requestAnimationFrame(anim);return;}spinning=false;toursLeft--;const g=gains[gainIdx];gainIdx++;totalGain+=g;
+  // Créditer le gain sur le VRAI solde (au lieu de l'écraser) et le persister sur Supabase
+  creditGainRoue(g);
+  updateTours();showGainMsg(g);}requestAnimationFrame(anim);}
+
+async function creditGainRoue(gain){
+  if(!currentUser.id) return;
+  currentUser.solde = (currentUser.solde||0) + gain;
+  updateSoldeDisplay();
+  try{
+    await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json'},
+      body:JSON.stringify({solde: currentUser.solde})
+    });
+  }catch(e){ console.log('Erreur crédit roue:', e); }
+}
+
 function updateTours(){[1,2,3].forEach(i=>document.getElementById('d'+i).className='t-dot'+(i>toursLeft?' used':''));document.getElementById('t-label').textContent=toursLeft>0?`${toursLeft} tour${toursLeft>1?'s':''} restant${toursLeft>1?'s':''}`:'Tours terminés !';if(toursLeft===0){const b=document.getElementById('spin-btn');b.disabled=true;b.textContent='Tours terminés';document.getElementById('close-roue-btn').classList.add('show');}else{document.getElementById('spin-btn').disabled=false;}}
-function showGainMsg(g){const el=document.getElementById('gain-anim');const manque=CONFIG.minRetrait-totalGain;if(toursLeft>0){el.className='gain-anim win';document.getElementById('gain-big').textContent='+'+g+' XAF';document.getElementById('gain-big').style.color='var(--green)';document.getElementById('gain-txt').textContent=`Ajouté ! Total : ${totalGain} XAF. Il te reste ${toursLeft} tour${toursLeft>1?'s':''}.`;}else{el.className='gain-anim warning';document.getElementById('gain-big').textContent='Total : '+totalGain+' XAF';document.getElementById('gain-big').style.color='var(--orange)';document.getElementById('gain-txt').innerHTML=`Il te manque <strong style="color:var(--orange)">${manque} XAF</strong> pour atteindre le minimum de retrait (${CONFIG.minRetrait} XAF).`;}document.getElementById('solde-display').textContent=totalGain.toLocaleString();}
-function closeRoue(){localStorage.setItem('roue_done','1');document.getElementById('roue-overlay').classList.remove('show');}
-if(!localStorage.getItem('roue_done')){document.getElementById('roue-overlay').classList.add('show');}
+function showGainMsg(g){const el=document.getElementById('gain-anim');const manque=Math.max(0,CONFIG.minRetrait-(currentUser.solde||0));if(toursLeft>0){el.className='gain-anim win';document.getElementById('gain-big').textContent='+'+g+' XAF';document.getElementById('gain-big').style.color='var(--green)';document.getElementById('gain-txt').textContent=`Ajouté à ton solde ! Il te reste ${toursLeft} tour${toursLeft>1?'s':''}.`;}else{el.className='gain-anim warning';document.getElementById('gain-big').textContent='Total gagné : '+totalGain+' XAF';document.getElementById('gain-big').style.color='var(--orange)';document.getElementById('gain-txt').innerHTML= manque>0 ? `Il te manque <strong style="color:var(--orange)">${manque.toLocaleString()} XAF</strong> pour atteindre le minimum de retrait (${CONFIG.minRetrait.toLocaleString()} XAF).` : `Tu peux maintenant effectuer un retrait !`;}}
+
+// Marque la roue comme terminée localement ET sur le serveur (empêche de la rejouer en vidant le cache)
+async function closeRoue(){
+  localStorage.setItem('roue_done','1');
+  document.getElementById('roue-overlay').classList.remove('show');
+  if(currentUser.id){
+    try{
+      await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
+        method:'PATCH',
+        headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json'},
+        body:JSON.stringify({roue_fait:true})
+      });
+    }catch(e){ console.log('Erreur sauvegarde roue_fait:', e); }
+  }
+}
 </script>
 </body>
 </html>
