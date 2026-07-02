@@ -266,12 +266,17 @@ async function loadDashboard(){
   if(!token){location.href='/';return;}
   try{
     const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
-    if(r.status===401){localStorage.clear();location.href='/';return;}
+    if(r.status===401){alert('DEBUG: 401 reçu, redirection vers login'); localStorage.clear();location.href='/';return;}
+    if(!r.ok){
+      const errBody = await r.text().catch(()=>'(illisible)');
+      alert('DEBUG: /api/me a échoué — HTTP '+r.status+' — Réponse: '+errBody);
+    }
     if(r.ok){
       const u=await r.json();
       currentUser.id = u.id;
       currentUser.solde = u.solde||0;
       currentUser.roue_fait = !!u.roue_fait;
+      alert('DEBUG /api/me → id: '+u.id+' | solde reçu: '+u.solde+' (type: '+typeof u.solde+')');
       updateSoldeDisplay();
       localStorage.setItem('user_nom',u.nom||'');
       localStorage.setItem('user_solde',u.solde||0);
@@ -294,7 +299,7 @@ async function loadDashboard(){
         img:p.image_url,style:p.style,ouvert:p.ouvert
       }));
     }
-  }catch(e){console.log('offline:',e);}
+  }catch(e){alert('DEBUG: Exception dans loadDashboard(): '+e.message); console.log('offline:',e);}
   renderPlans();
 }
 
