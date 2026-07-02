@@ -375,16 +375,25 @@ function spinWheel(){if(spinning||toursLeft===0)return;spinning=true;document.ge
   updateTours();showGainMsg(g);}requestAnimationFrame(anim);}
 
 async function creditGainRoue(gain){
-  if(!currentUser.id) return;
+  if(!currentUser.id){ alert('DEBUG: currentUser.id est vide, impossible de créditer.'); return; }
   currentUser.solde = (currentUser.solde||0) + gain;
   updateSoldeDisplay();
   try{
-    await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
+    const resp = await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json'},
+      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({solde: currentUser.solde})
     });
-  }catch(e){ console.log('Erreur crédit roue:', e); }
+    if(!resp.ok){
+      const errText = await resp.text();
+      alert('DEBUG: Échec crédit roue (HTTP '+resp.status+') : '+errText+' | id utilisé: '+currentUser.id);
+    } else {
+      const result = await resp.json();
+      if(!result || !result.length){
+        alert('DEBUG: PATCH réussi (200) mais 0 ligne modifiée. id utilisé: '+currentUser.id);
+      }
+    }
+  }catch(e){ alert('DEBUG: Erreur réseau crédit roue: '+e.message); }
 }
 
 function updateTours(){[1,2,3].forEach(i=>document.getElementById('d'+i).className='t-dot'+(i>toursLeft?' used':''));document.getElementById('t-label').textContent=toursLeft>0?`${toursLeft} tour${toursLeft>1?'s':''} restant${toursLeft>1?'s':''}`:'Tours terminés !';if(toursLeft===0){const b=document.getElementById('spin-btn');b.disabled=true;b.textContent='Tours terminés';document.getElementById('close-roue-btn').classList.add('show');persisterRoueFait();}else{document.getElementById('spin-btn').disabled=false;}}
