@@ -396,6 +396,8 @@ async function creditGainRoue(gain){
       const result = await resp.json();
       if(!result || !result.length){
         alert('DEBUG: PATCH réussi (200) mais 0 ligne modifiée. id utilisé: '+currentUser.id);
+      } else {
+        alert('DEBUG: Crédit réussi ! Gain: +'+gain+' | Nouveau solde envoyé: '+currentUser.solde+' | Solde renvoyé par Supabase: '+result[0].solde+' | id: '+currentUser.id);
       }
     }
   }catch(e){ alert('DEBUG: Erreur réseau crédit roue: '+e.message); }
