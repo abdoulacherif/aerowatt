@@ -8,6 +8,8 @@ import secrets
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+BONUS_BIENVENUE = 1000  # XAF crédités automatiquement à l'inscription
+
 class LoginData(BaseModel):
     telephone: str
     password: str
@@ -44,9 +46,10 @@ async def register(data: RegisterData):
         "nom": data.nom,
         "telephone": data.telephone,
         "password": hashed,
-        "solde": 0,
+        "solde": BONUS_BIENVENUE,  # bonus de bienvenue crédité une seule fois à l'inscription
         "referral_code": data.referral,
-        "mon_code": data.telephone[-6:]
+        "mon_code": data.telephone[-6:],
+        "roue_fait": True  # la roue devient une simple animation, plus besoin de la proposer
     }).execute()
     uid = user.data[0]["id"]
     return {"token": create_token(uid), "message": "Compte créé"}
