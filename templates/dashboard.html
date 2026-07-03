@@ -114,16 +114,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </style>
 </head>
 <body>
-<div id="debug-panel" style="position:fixed;top:0;left:0;right:0;max-height:45vh;overflow-y:auto;background:#000;color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:99999;border-bottom:3px solid red;white-space:pre-wrap;line-height:1.4"></div>
-<script>
-function logDebug(msg){
-  const p = document.getElementById('debug-panel');
-  const t = new Date().toLocaleTimeString('fr');
-  p.textContent += '['+t+'] '+msg+'\n\n';
-  p.scrollTop = p.scrollHeight;
-  console.log('[DEBUG]', msg);
-}
-</script>
 
 <div class="hero">
   <img src="https://images.unsplash.com/photo-1548337138-e87d889cc369?w=800&q=80" alt="AEROWATT">
@@ -271,31 +261,21 @@ function updateSoldeDisplay(){
   }
 }
 
-// ── CHARGEMENT UNIQUE (fusion des deux fonctions dupliquées) ──
+// ── CHARGEMENT UNIQUE ──
 async function loadDashboard(){
   const token=localStorage.getItem('token');
   if(!token){location.href='/';return;}
   try{
     const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+token}});
-    if(r.status===401){logDebug('DEBUG: 401 reçu, redirection vers login'); localStorage.clear();location.href='/';return;}
-    if(!r.ok){
-      const errBody = await r.text().catch(()=>'(illisible)');
-      logDebug('DEBUG: /api/me a échoué — HTTP '+r.status+' — Réponse: '+errBody);
-    }
+    if(r.status===401){localStorage.clear();location.href='/';return;}
     if(r.ok){
       const u=await r.json();
       currentUser.id = u.id;
       currentUser.solde = u.solde||0;
-      currentUser.roue_fait = !!u.roue_fait;
-      logDebug('DEBUG /api/me → id: '+u.id+' | solde reçu: '+u.solde+' (type: '+typeof u.solde+')');
       updateSoldeDisplay();
       localStorage.setItem('user_nom',u.nom||'');
       localStorage.setItem('user_solde',u.solde||0);
       localStorage.setItem('user_code',u.mon_code||'');
-      // La roue ne s'affiche que si ni le serveur ni le stockage local ne l'indiquent comme faite
-      if(!currentUser.roue_fait && !localStorage.getItem('roue_done')){
-        document.getElementById('roue-overlay').classList.add('show');
-      }
     }
     // Plans depuis Supabase
     const rp=await fetch(SUPABASE_URL2+'/rest/v1/plans?order=prix',{
@@ -310,7 +290,7 @@ async function loadDashboard(){
         img:p.image_url,style:p.style,ouvert:p.ouvert
       }));
     }
-  }catch(e){logDebug('DEBUG: Exception dans loadDashboard(): '+e.message); console.log('offline:',e);}
+  }catch(e){console.log('offline:',e);}
   renderPlans();
 }
 
@@ -376,7 +356,7 @@ async function confirmerInvestissement(){
   }catch(e){alert('Erreur. Réessayez.');btn.textContent=btnOriginal;btn.disabled=false;}
 }
 
-// ── ROUE DE LA CHANCE ──
+// ── ROUE DE LA CHANCE (simulation visuelle uniquement — le bonus réel est crédité à l'inscription) ──
 const segs=[{l:'334',c:'#FF6B00'},{l:'0',c:'#0D1827'},{l:'333',c:'#0066FF'},{l:'0',c:'#00B4CC'},{l:'333',c:'#FF9A3C'},{l:'0',c:'#0D1827'},{l:'0',c:'#00B86B'},{l:'0',c:'#0066FF'}];
 const N=segs.length,arc=2*Math.PI/N;
 let wAngle=0,toursLeft=3,totalGain=0,spinning=false,gainIdx=0;
@@ -385,58 +365,13 @@ const canvas=document.getElementById('wheel'),ctx=canvas.getContext('2d');
 function drawWheel(a){ctx.clearRect(0,0,210,210);const cx=105,cy=105,r=102;for(let i=0;i<N;i++){const s=a+i*arc,e=s+arc;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();ctx.fillStyle=segs[i].c;ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1.5;ctx.stroke();if(segs[i].l!=='0'){ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold 12px Orbitron,monospace';ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=3;ctx.fillText(segs[i].l,r-8,5);ctx.restore();}}ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=3;ctx.stroke();}
 drawWheel(0);
 const winSegs=[0,2,4];
-function spinWheel(){if(spinning||toursLeft===0)return;spinning=true;document.getElementById('spin-btn').disabled=true;document.getElementById('gain-anim').className='gain-anim';const tSeg=winSegs[gainIdx];const tAngle=2*Math.PI-tSeg*arc-arc/2;const totalRot=2*Math.PI*7+tAngle-((wAngle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);const dur=4500,start=performance.now(),startA=wAngle;function anim(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,4);wAngle=startA+totalRot*e;drawWheel(wAngle);if(p<1){requestAnimationFrame(anim);return;}spinning=false;toursLeft--;const g=gains[gainIdx];gainIdx++;totalGain+=g;
-  // Créditer le gain sur le VRAI solde (au lieu de l'écraser) et le persister sur Supabase
-  creditGainRoue(g);
-  updateTours();showGainMsg(g);}requestAnimationFrame(anim);}
+function spinWheel(){if(spinning||toursLeft===0)return;spinning=true;document.getElementById('spin-btn').disabled=true;document.getElementById('gain-anim').className='gain-anim';const tSeg=winSegs[gainIdx];const tAngle=2*Math.PI-tSeg*arc-arc/2;const totalRot=2*Math.PI*7+tAngle-((wAngle%(2*Math.PI))+2*Math.PI)%(2*Math.PI);const dur=4500,start=performance.now(),startA=wAngle;function anim(now){const p=Math.min((now-start)/dur,1),e=1-Math.pow(1-p,4);wAngle=startA+totalRot*e;drawWheel(wAngle);if(p<1){requestAnimationFrame(anim);return;}spinning=false;toursLeft--;const g=gains[gainIdx];gainIdx++;totalGain+=g;updateTours();showGainMsg(g);}requestAnimationFrame(anim);}
 
-async function creditGainRoue(gain){
-  if(!currentUser.id){ logDebug('DEBUG: currentUser.id est vide, impossible de créditer.'); return; }
-  currentUser.solde = (currentUser.solde||0) + gain;
-  updateSoldeDisplay();
-  try{
-    const resp = await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({solde: currentUser.solde})
-    });
-    if(!resp.ok){
-      const errText = await resp.text();
-      logDebug('DEBUG: Échec crédit roue (HTTP '+resp.status+') : '+errText+' | id utilisé: '+currentUser.id);
-    } else {
-      const result = await resp.json();
-      if(!result || !result.length){
-        logDebug('DEBUG: PATCH réussi (200) mais 0 ligne modifiée. id utilisé: '+currentUser.id);
-      } else {
-        logDebug('DEBUG: Crédit réussi ! Gain: +'+gain+' | Nouveau solde envoyé: '+currentUser.solde+' | Solde renvoyé par Supabase: '+result[0].solde+' | id: '+currentUser.id);
-      }
-    }
-  }catch(e){ logDebug('DEBUG: Erreur réseau crédit roue: '+e.message); }
-}
+function updateTours(){[1,2,3].forEach(i=>document.getElementById('d'+i).className='t-dot'+(i>toursLeft?' used':''));document.getElementById('t-label').textContent=toursLeft>0?`${toursLeft} tour${toursLeft>1?'s':''} restant${toursLeft>1?'s':''}`:'Tours terminés !';if(toursLeft===0){const b=document.getElementById('spin-btn');b.disabled=true;b.textContent='Tours terminés';document.getElementById('close-roue-btn').classList.add('show');}else{document.getElementById('spin-btn').disabled=false;}}
 
-function updateTours(){[1,2,3].forEach(i=>document.getElementById('d'+i).className='t-dot'+(i>toursLeft?' used':''));document.getElementById('t-label').textContent=toursLeft>0?`${toursLeft} tour${toursLeft>1?'s':''} restant${toursLeft>1?'s':''}`:'Tours terminés !';if(toursLeft===0){const b=document.getElementById('spin-btn');b.disabled=true;b.textContent='Tours terminés';document.getElementById('close-roue-btn').classList.add('show');persisterRoueFait();}else{document.getElementById('spin-btn').disabled=false;}}
+function showGainMsg(g){const el=document.getElementById('gain-anim');if(toursLeft>0){el.className='gain-anim win';document.getElementById('gain-big').textContent='+'+g+' XAF';document.getElementById('gain-big').style.color='var(--green)';document.getElementById('gain-txt').textContent=`Il te reste ${toursLeft} tour${toursLeft>1?'s':''}.`;}else{el.className='gain-anim win';document.getElementById('gain-big').textContent='Total : '+totalGain+' XAF';document.getElementById('gain-big').style.color='var(--green)';document.getElementById('gain-txt').textContent='Merci d\\'avoir joué !';}}
 
-// Sauvegarde roue_fait dès la fin du 3e tour, SANS attendre le clic sur "Aller au Dashboard"
-// (corrige le bug : la roue réapparaissait si l'utilisateur fermait la page avant de cliquer ce bouton)
-let roueFaitPersiste = false;
-async function persisterRoueFait(){
-  if(roueFaitPersiste || !currentUser.id) return;
-  roueFaitPersiste = true;
-  localStorage.setItem('roue_done','1');
-  try{
-    await fetch(SUPABASE_URL2+'/rest/v1/users?id=eq.'+currentUser.id,{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY2,'Authorization':'Bearer '+SUPABASE_KEY2,'Content-Type':'application/json'},
-      body:JSON.stringify({roue_fait:true})
-    });
-  }catch(e){ console.log('Erreur sauvegarde roue_fait:', e); }
-}
-function showGainMsg(g){const el=document.getElementById('gain-anim');const manque=Math.max(0,CONFIG.minRetrait-(currentUser.solde||0));if(toursLeft>0){el.className='gain-anim win';document.getElementById('gain-big').textContent='+'+g+' XAF';document.getElementById('gain-big').style.color='var(--green)';document.getElementById('gain-txt').textContent=`Ajouté à ton solde ! Il te reste ${toursLeft} tour${toursLeft>1?'s':''}.`;}else{el.className='gain-anim warning';document.getElementById('gain-big').textContent='Total gagné : '+totalGain+' XAF';document.getElementById('gain-big').style.color='var(--orange)';document.getElementById('gain-txt').innerHTML= manque>0 ? `Il te manque <strong style="color:var(--orange)">${manque.toLocaleString()} XAF</strong> pour atteindre le minimum de retrait (${CONFIG.minRetrait.toLocaleString()} XAF).` : `Tu peux maintenant effectuer un retrait !`;}}
-
-// La sauvegarde (localStorage + Supabase) est déjà faite par persisterRoueFait() dès la fin du 3e tour.
-// Ce bouton ne fait donc plus que fermer visuellement la fenêtre.
 function closeRoue(){
-  localStorage.setItem('roue_done','1');
   document.getElementById('roue-overlay').classList.remove('show');
 }
 </script>
