@@ -381,7 +381,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
 const SUPABASE_URL = 'https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 const ADMIN_TEL = '651461777';
-const ADMIN_PASS = 'CHANGE_MOI_123'; // ⚠️ change ce mot de passe avant de déployer
+const ADMIN_PASS = 'abdoula.@4';
 
 // ── SUPABASE HELPER ──
 async function sb(table, method='GET', body=null, filter='') {
@@ -402,10 +402,18 @@ async function sb(table, method='GET', body=null, filter='') {
 }
 
 // ── LOGIN ──
+function normalizeTel(v){
+  // Ne garde que les chiffres, puis retire un éventuel indicatif ou 0 initial
+  // pour ne comparer que les derniers chiffres significatifs du numéro.
+  let digits = (v||'').replace(/\D/g,'');
+  digits = digits.replace(/^0+/, '');
+  return digits.slice(-9); // les 9 derniers chiffres (format local tchadien)
+}
+
 function loginAdmin() {
-  const tel = document.getElementById('admin-tel').value.replace(/\s/g,'');
+  const tel = normalizeTel(document.getElementById('admin-tel').value);
   const pass = document.getElementById('admin-pass').value;
-  if(tel === ADMIN_TEL && pass === ADMIN_PASS) {
+  if(tel === normalizeTel(ADMIN_TEL) && pass === ADMIN_PASS) {
     document.getElementById('login-screen').style.display = 'none';
     sessionStorage.setItem('admin_session', '1');
     document.getElementById('login-error').style.display = 'none';
