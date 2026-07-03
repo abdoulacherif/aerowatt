@@ -24,46 +24,56 @@ from routers import auth
 app.include_router(auth.router)
 
 # ── PAGES HTML ──
+# no-store empêche le navigateur (surtout Chrome Android) de garder une version en cache :
+# chaque visite recharge le fichier réel depuis le serveur.
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
+
+def html_page(path: str):
+    return FileResponse(path, headers=NO_CACHE_HEADERS)
 
 @app.get("/")
 async def root():
-    return FileResponse("templates/splash.html")
+    return html_page("templates/splash.html")
 
 @app.get("/dashboard")
 async def dashboard():
-    return FileResponse("templates/dashboard.html")
+    return html_page("templates/dashboard.html")
 
 @app.get("/revenu")
 async def revenu():
-    return FileResponse("templates/revenu.html")
+    return html_page("templates/revenu.html")
 
 @app.get("/messages")
 async def messages():
-    return FileResponse("templates/messages.html")
+    return html_page("templates/messages.html")
 
 @app.get("/actualites")
 async def actualites():
-    return FileResponse("templates/actualites.html")
+    return html_page("templates/actualites.html")
 
 @app.get("/equipe")
 async def equipe():
-    return FileResponse("templates/equipe.html")
+    return html_page("templates/equipe.html")
 
 @app.get("/profil")
 async def profil():
-    return FileResponse("templates/profil.html")
+    return html_page("templates/profil.html")
 
 @app.get("/wallet")
 async def wallet():
-    return FileResponse("templates/wallet.html")
+    return html_page("templates/wallet.html")
 
 @app.get("/admin")
 async def admin():
-    return FileResponse("templates/admin.html")
+    return html_page("templates/admin.html")
 
 @app.get('/preuves')
 async def preuves():
-    return FileResponse('templates/preuves.html')
+    return html_page('templates/preuves.html')
 
 
 # ── AUTHENTIFICATION API (centralisée, corrige les bugs de gestion d'erreurs) ──
