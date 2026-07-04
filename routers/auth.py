@@ -41,6 +41,14 @@ async def register(data: RegisterData):
     existing = supabase.table("users").select("id").eq("telephone", data.telephone).execute()
     if existing.data:
         raise HTTPException(400, "Numéro déjà utilisé")
+
+    # Résout le code de parrainage saisi vers le compte réel du parrain (s'il existe)
+    parrain_id = None
+    if data.referral:
+        parrain = supabase.table("users").select("id").eq("mon_code", data.referral.strip()).execute()
+        if parrain.data:
+            parrain_id = parrain.data[0]["id"]
+
     hashed = hash_password(data.password)
     user = supabase.table("users").insert({
         "nom": data.nom,
@@ -48,6 +56,7 @@ async def register(data: RegisterData):
         "password": hashed,
         "solde": BONUS_BIENVENUE,  # bonus de bienvenue crédité une seule fois à l'inscription
         "referral_code": data.referral,
+        "parrain_id": parrain_id,
         "mon_code": data.telephone[-6:],
         "roue_fait": True  # la roue devient une simple animation, plus besoin de la proposer
     }).execute()
