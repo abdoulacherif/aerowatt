@@ -221,7 +221,7 @@ async def investir(data: dict, user: dict = Depends(get_current_user)):
 
 import os
 
-@app.post("/api/cron/verser-revenus")
+@app.get("/api/cron/verser-revenus")
 async def verser_revenus(secret: str = ""):
     """
     Parcourt tous les investissements actifs et verse les gains :
