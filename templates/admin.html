@@ -523,6 +523,7 @@ async function validerTx(txId, userId, montant, type) {
       const user = await sb('users','GET',null,`?id=eq.${userId}&select=solde`);
       const newSolde = (user[0]?.solde||0) + montant;
       await sb('users','PATCH',{solde:newSolde},`?id=eq.${userId}`);
+      await verserCommissionsParrainage(userId, montant);
     } else {
       const user = await sb('users','GET',null,`?id=eq.${userId}&select=solde`);
       const newSolde = Math.max(0,(user[0]?.solde||0) - montant);
@@ -531,6 +532,44 @@ async function validerTx(txId, userId, montant, type) {
     showToast(type==='depot'?'✅ Dépôt approuvé + solde crédité':'✅ Retrait payé + solde débité');
     loadDepots(); loadRetraits(); loadStats();
   } catch(e){ showToast('Erreur: '+e.message, true); }
+}
+
+// Verse la commission de parrainage sur 3 niveaux (N1/N2/N3) à chaque dépôt approuvé.
+// Remonte la chaîne parrain_id jusqu'à 3 niveaux, crédite chaque parrain trouvé,
+// et journalise chaque versement dans transactions pour l'historique et /api/equipe.
+async function verserCommissionsParrainage(depositeurId, montantDepot) {
+  try {
+    const cfg = await sb('config','GET',null,'');
+    const cfgMap = {};
+    cfg.forEach(c=>cfgMap[c.cle]=c.valeur);
+    const pourcentages = [
+      {niveau:'commission_n1', type:'commission_n1', pct: parseFloat(cfgMap.commission_n1||20)},
+      {niveau:'commission_n2', type:'commission_n2', pct: parseFloat(cfgMap.commission_n2||8)},
+      {niveau:'commission_n3', type:'commission_n3', pct: parseFloat(cfgMap.commission_n3||3)}
+    ];
+
+    let currentUserId = depositeurId;
+    for (const {type: txType, pct} of pourcentages) {
+      const u = await sb('users','GET',null,`?id=eq.${currentUserId}&select=parrain_id`);
+      const parrainId = u[0]?.parrain_id;
+      if(!parrainId) break; // plus de parrain à ce niveau, on arrête la remontée
+
+      const commission = Math.round(montantDepot * pct / 100);
+      const parrain = await sb('users','GET',null,`?id=eq.${parrainId}&select=solde`);
+      const nouveauSolde = (parrain[0]?.solde||0) + commission;
+      await sb('users','PATCH',{solde:nouveauSolde},`?id=eq.${parrainId}`);
+      await sb('transactions','POST',{
+        user_id: parrainId,
+        type: txType,
+        montant: commission,
+        statut: 'approuve'
+      });
+
+      currentUserId = parrainId; // remonte d'un niveau pour l'itération suivante
+    }
+  } catch(e) {
+    console.log('Erreur versement commissions parrainage:', e);
+  }
 }
 
 async function rejeterTx(txId) {
