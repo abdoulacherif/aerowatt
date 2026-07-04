@@ -317,10 +317,13 @@ function setQty(q){currentQty=q;document.querySelectorAll('.qty-btn').forEach((b
 function updateRecap(){const p=currentPlan;document.getElementById('m-daily').textContent=(p.quotidien*currentQty).toLocaleString()+' XAF';document.getElementById('m-total').textContent=(p.totalRevenu*currentQty).toLocaleString()+' XAF';document.getElementById('m-dispo').textContent=p.dispo+'/'+p.total;document.getElementById('m-payer').textContent=(p.prix*currentQty).toLocaleString()+' XAF';}
 function closeModal(){document.getElementById('modal-ov').classList.remove('show');}
 
+let investissementEnCours = false;
 async function confirmerInvestissement(){
+  if(investissementEnCours) return; // empêche un double-clic de créer un double débit
   const token=localStorage.getItem('token');
   if(!token){location.href='/';return;}
   if(!currentPlan){closeModal();return;}
+  investissementEnCours = true;
   const btn=document.getElementById('m-invest-btn');
   const btnOriginal = btn.textContent;
   btn.textContent='Traitement...';btn.disabled=true;
@@ -335,7 +338,6 @@ async function confirmerInvestissement(){
     const u=await r.json();
     if((u.solde||0)<montantTotal){
       alert('Solde insuffisant ! Faites un dépôt.');
-      btn.textContent=btnOriginal;btn.disabled=false;
       return;
     }
     const r2=await fetch('/api/investir',{
@@ -352,12 +354,16 @@ async function confirmerInvestissement(){
       })
     });
     const d=await r2.json().catch(()=>({}));
-    if(!r2.ok){alert(d.detail||'Erreur');btn.textContent=btnOriginal;btn.disabled=false;return;}
+    if(!r2.ok){alert(d.detail||'Erreur'); return;}
     closeModal();
     currentUser.solde = d.nouveau_solde!=null ? d.nouveau_solde : (u.solde - montantTotal);
     updateSoldeDisplay();
     alert('✅ Investissement confirmé !');
-  }catch(e){alert('Erreur. Réessayez.');btn.textContent=btnOriginal;btn.disabled=false;}
+  }catch(e){alert('Erreur. Réessayez.');
+  }finally{
+    investissementEnCours = false;
+    btn.textContent=btnOriginal;btn.disabled=false;
+  }
 }
 
 // ── ROUE DE LA CHANCE (simulation visuelle uniquement — le bonus réel est crédité à l'inscription) ──
