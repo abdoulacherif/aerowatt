@@ -246,7 +246,7 @@ async def verser_revenus(secret: str = ""):
             date_debut = datetime.fromisoformat(inv["date_debut"].replace("Z", "+00:00")).replace(tzinfo=None)
             cycle_jours = inv["cycle_jours"]
             jours_deja_verses = inv.get("jours_verses", 0)
-            jours_dus = min((now - date_debut).days, cycle_jours)
+            jours_dus = min((now.date() - date_debut.date()).days, cycle_jours)
 
             if jours_dus > jours_deja_verses:
                 nb_jours_a_payer = jours_dus - jours_deja_verses
