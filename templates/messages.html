@@ -32,6 +32,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .notif-unread-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-left:auto;flex-shrink:0}
 .notif-body{padding:0 14px 12px;font-size:12px;color:#3A4A5A;line-height:1.6}
 .notif-img{width:100%;max-height:180px;object-fit:cover;border-radius:0 0 12px 12px;display:block}
+.empty-notifs{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
 .chat-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .chat-header{background:#fff;padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
 .chat-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center}
@@ -83,7 +84,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 <div class="tabs">
   <div class="tab active" onclick="switchTab('notifs',this)">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-    Notifications<span class="tab-badge" id="notif-badge">3</span>
+    Notifications<span class="tab-badge" id="notif-badge">0</span>
   </div>
   <div class="tab" onclick="switchTab('chat',this)">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
@@ -91,7 +92,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   </div>
 </div>
 <div class="panel active" id="panel-notifs">
-  <div class="notifs-list" id="notifs-list"></div>
+  <div class="notifs-list" id="notifs-list"><div class="empty-notifs">Chargement...</div></div>
 </div>
 <div class="panel" id="panel-chat">
   <div class="chat-wrap">
@@ -123,6 +124,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 const SUPABASE_URL='https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 let NOTIFICATIONS=[];
+let unreadNotifs=0;
 
 async function loadNotifications(){
   const token=localStorage.getItem('token');
@@ -134,31 +136,23 @@ async function loadNotifications(){
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
     const data=await rn.json();
-    if(data&&data.length){
-      NOTIFICATIONS=data.map(n=>({
-        id:n.id,titre:n.titre,corps:n.corps,
-        image:n.image_url,type:n.type,
-        date:new Date(n.created_at).toLocaleString('fr'),lu:n.lu
-      }));
-    }
-  }catch(e){console.log('offline notifs');}
+    NOTIFICATIONS=(data||[]).map(n=>({
+      id:n.id,titre:n.titre,corps:n.corps,
+      image:n.image_url,type:n.type,
+      date:new Date(n.created_at).toLocaleString('fr'),lu:n.lu
+    }));
+  }catch(e){console.log('offline notifs', e);}
   unreadNotifs=NOTIFICATIONS.filter(n=>!n.lu).length;
   renderNotifs();
   renderChat();
 }
 
-const NOTIFICATIONS_STATIC=[
-  {id:1,titre:"🎉 Bienvenue sur AEROWATT !",corps:"Votre compte a été créé avec succès. Commencez à investir dès aujourd'hui !",image:"https://images.unsplash.com/photo-1548337138-e87d889cc369?w=600&q=80",type:"info",date:"Aujourd'hui 08:00",lu:false},
-  {id:2,titre:"⚡ Nouveau plan disponible !",corps:"Le plan Éolienne Elite 500W vient d'être lancé. 19,200 XAF/jour sur 90 jours.",image:"https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600&q=80",type:"update",date:"Hier 14:30",lu:false},
-  {id:3,titre:"🎁 Promotion parrainage",corps:"Parrainez vos amis et gagnez 20% de commission sur leur premier dépôt !",image:null,type:"promo",date:"12 Jun",lu:false},
-  {id:4,titre:"⚠️ Maintenance prévue",corps:"Maintenance le 15 Juin de 02h à 05h. Dépôts et retraits suspendus.",image:null,type:"alerte",date:"9 Jun",lu:true}
-];
 const CHAT_MESSAGES=[
   {role:'admin',text:"👋 Bonjour ! Bienvenue sur AEROWATT. Comment puis-je vous aider ?",time:"08:00",img:null},
   {role:'admin',text:"Notre équipe est disponible 24h/7j pour vos questions.",time:"08:00",img:null}
 ];
 let messages=[...CHAT_MESSAGES];
-let unreadNotifs=NOTIFICATIONS.filter(n=>!n.lu).length;
+
 function switchTab(tab,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -166,15 +160,22 @@ function switchTab(tab,btn){
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='chat')setTimeout(scrollChat,100);
 }
+
 function renderNotifs(){
-  const c=document.getElementById('notifs-list');c.innerHTML='';
-  document.getElementById('notif-badge').textContent=unreadNotifs;
-  if(unreadNotifs===0)document.getElementById('notif-badge').style.display='none';
+  const c=document.getElementById('notifs-list');
+  const badge=document.getElementById('notif-badge');
+  badge.textContent=unreadNotifs;
+  badge.style.display=unreadNotifs===0?'none':'flex';
+  if(!NOTIFICATIONS.length){
+    c.innerHTML='<div class="empty-notifs">Aucune notification pour le moment.</div>';
+    return;
+  }
+  c.innerHTML='';
+  const icons={info:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#0066FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',update:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>',promo:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#FF9A3C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',alerte:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'};
   NOTIFICATIONS.forEach(n=>{
-    const icons={info:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#0066FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',update:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>',promo:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#FF9A3C"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',alerte:'<svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'};
     const bg={info:'ni-blue',update:'ni-orange',promo:'ni-orange',alerte:'ni-orange'}[n.type]||'ni-blue';
     const bc=!n.lu?(n.type==='info'?'unread':'unread-orange'):'';
-    c.innerHTML+=`<div class="notif-item ${bc}" onclick="markRead(${n.id})">
+    c.innerHTML+=`<div class="notif-item ${bc}" onclick="markRead('${n.id}')">
       <div class="notif-header">
         <div class="notif-icon-wrap ${bg}">${icons[n.type]||icons.info}</div>
         <div style="flex:1"><div class="notif-title">${n.titre}</div><div class="notif-time">${n.date}</div></div>
@@ -185,7 +186,24 @@ function renderNotifs(){
     </div>`;
   });
 }
-function markRead(id){const n=NOTIFICATIONS.find(n=>n.id===id);if(n&&!n.lu){n.lu=true;unreadNotifs--;renderNotifs();}}
+
+// Corrigé : la lecture est maintenant persistée sur Supabase (avant : uniquement en mémoire locale,
+// donc tout redevenait "non lu" au moindre rechargement de page)
+async function markRead(id){
+  const n=NOTIFICATIONS.find(n=>String(n.id)===String(id));
+  if(!n || n.lu) return;
+  n.lu=true;
+  unreadNotifs=Math.max(0, unreadNotifs-1);
+  renderNotifs();
+  try{
+    await fetch(SUPABASE_URL+'/rest/v1/notifications?id=eq.'+id,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({lu:true})
+    });
+  }catch(e){ console.log('Erreur marquage lu:', e); }
+}
+
 function renderChat(){
   const c=document.getElementById('chat-messages');c.innerHTML='';
   messages.forEach(m=>{
