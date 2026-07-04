@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "main.py"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/verser-revenus?secret=CHANGE_MOI_SECRET_CRON",
+      "schedule": "5 0 * * *"
+    }
   ]
 }
