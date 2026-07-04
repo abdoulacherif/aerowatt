@@ -19,6 +19,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .code-btn{flex:1;padding:10px;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
 .btn-copy{background:rgba(0,229,255,0.15);color:var(--cyan);border:1px solid rgba(0,229,255,0.3)}
 .btn-share{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff}
+.parrain-card{margin:12px 16px 0;background:#fff;border-radius:16px;padding:16px;border:1.5px dashed var(--border)}
+.parrain-title{font-size:13px;font-weight:800;color:var(--black);margin-bottom:10px}
+.parrain-row{display:flex;gap:8px}
+.parrain-input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--black);outline:none}
+.parrain-btn{padding:10px 18px;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:10px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer}
 .stats-row{display:flex;gap:10px;margin:12px 16px 0}
 .stat-card{flex:1;background:#fff;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid var(--border)}
 .stat-icon{width:36px;height:36px;border-radius:10px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
@@ -57,7 +62,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .fl2{background:rgba(192,192,192,0.2);color:#888}
 .fl3{background:rgba(205,127,50,0.15);color:#A0522D}
 .filleul-gain{margin-left:auto;text-align:right}
-.filleul-gain-val{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--green)}
+.filleul-gain-val{font-size:11px;font-weight:700}
 .filleul-gain-lbl{font-size:9px;color:var(--muted);text-transform:uppercase}
 .empty-filleuls{text-align:center;padding:30px 20px;background:#fff;border-radius:14px;border:1px solid var(--border)}
 .empty-filleuls-icon{font-size:40px;margin-bottom:10px}
@@ -87,12 +92,22 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </div>
 <div class="mon-code-card">
   <div class="code-label">Mon code de parrainage</div>
-  <div class="code-val" id="mon-code">AW-742281</div>
+  <div class="code-val" id="mon-code">—</div>
   <div class="code-actions">
     <button class="code-btn btn-copy" onclick="copyCode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="#00E5FF"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Copier</button>
     <button class="code-btn btn-share" onclick="shareCode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>Partager</button>
   </div>
 </div>
+
+<!-- AJOUTER UN PARRAIN APRÈS COUP (affiché seulement si l'utilisateur n'en a pas déjà un) -->
+<div class="parrain-card" id="parrain-card" style="display:none">
+  <div class="parrain-title">🎁 Vous avez un code de parrainage ?</div>
+  <div class="parrain-row">
+    <input type="text" class="parrain-input" id="parrain-code-input" placeholder="Entrez le code de votre parrain">
+    <button class="parrain-btn" onclick="lierParrain()">Valider</button>
+  </div>
+</div>
+
 <div class="stats-row">
   <div class="stat-card">
     <div class="stat-icon" style="background:rgba(0,102,255,0.1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="#0066FF"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
@@ -112,9 +127,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </div>
 <div class="commission-card">
   <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Taux de commission</div>
-  <div class="level-row"><div class="level-badge l1">N1</div><div class="level-info"><div class="level-name">Filleuls directs</div><div class="level-desc">Commission sur premier dépôt</div></div><div class="level-pct" id="pct-n1">20%</div></div>
-  <div class="level-row"><div class="level-badge l2">N2</div><div class="level-info"><div class="level-name">Filleuls indirects</div><div class="level-desc">Filleuls de vos filleuls</div></div><div class="level-pct" id="pct-n2">8%</div></div>
-  <div class="level-row"><div class="level-badge l3">N3</div><div class="level-info"><div class="level-name">Niveau 3</div><div class="level-desc">Filleuls de niveau 3</div></div><div class="level-pct" id="pct-n3">3%</div></div>
+  <div class="level-row"><div class="level-badge l1">N1</div><div class="level-info"><div class="level-name">Filleuls directs</div><div class="level-desc">Commission sur chaque dépôt</div></div><div class="level-pct" id="pct-n1">—</div></div>
+  <div class="level-row"><div class="level-badge l2">N2</div><div class="level-info"><div class="level-name">Filleuls indirects</div><div class="level-desc">Filleuls de vos filleuls</div></div><div class="level-pct" id="pct-n2">—</div></div>
+  <div class="level-row"><div class="level-badge l3">N3</div><div class="level-info"><div class="level-name">Niveau 3</div><div class="level-desc">Filleuls de niveau 3</div></div><div class="level-pct" id="pct-n3">—</div></div>
 </div>
 <div class="gains-card">
   <div class="gains-title">Total commissions reçues</div>
@@ -133,12 +148,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     <div class="tab-s" onclick="filterLevel('2',this)">Niveau 2</div>
     <div class="tab-s" onclick="filterLevel('3',this)">Niveau 3</div>
   </div>
-  <div id="filleuls-list"></div>
+  <div id="filleuls-list"><div class="empty-filleuls">Chargement...</div></div>
 </div>
 <div class="regles-card">
   <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0066FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>Règles du parrainage</div>
-  <div class="regle-item"><div class="regle-num">1</div><div class="regle-txt">La commission de <strong>20% (N1)</strong>, <strong>8% (N2)</strong> et <strong>3% (N3)</strong> est versée sur le <strong>premier dépôt</strong> de chaque filleul.</div></div>
-  <div class="regle-item"><div class="regle-num">2</div><div class="regle-txt">Les commissions sont <strong>créditées instantanément</strong> dès que votre filleul effectue son dépôt.</div></div>
+  <div class="regle-item"><div class="regle-num">1</div><div class="regle-txt">La commission de <strong id="regle-n1">20% (N1)</strong>, <strong id="regle-n2">8% (N2)</strong> et <strong id="regle-n3">3% (N3)</strong> est versée sur <strong>chaque dépôt approuvé</strong> de vos filleuls.</div></div>
+  <div class="regle-item"><div class="regle-num">2</div><div class="regle-txt">Les commissions sont <strong>créditées dès qu'un administrateur approuve</strong> le dépôt de votre filleul.</div></div>
   <div class="regle-item"><div class="regle-num">3</div><div class="regle-txt">Il n'y a <strong>pas de limite</strong> au nombre de filleuls que vous pouvez parrainer.</div></div>
   <div class="regle-item"><div class="regle-num">4</div><div class="regle-txt">Les commissions peuvent être <strong>retirées à tout moment</strong> dès le minimum de retrait atteint.</div></div>
 </div>
@@ -151,21 +166,51 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   <a class="nav-item" href="/profil"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.8 4-4s-1.3-4-4-4-4 1.8-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Moi</span></a>
 </div>
 <script>
-const CONFIG={monCode:"AW-742281",commissions:{n1:20,n2:8,n3:3},filleuls:[]};
-function init(){
-  document.getElementById('mon-code').textContent=CONFIG.monCode;
-  document.getElementById('pct-n1').textContent=CONFIG.commissions.n1+'%';
-  document.getElementById('pct-n2').textContent=CONFIG.commissions.n2+'%';
-  document.getElementById('pct-n3').textContent=CONFIG.commissions.n3+'%';
-  const total=CONFIG.filleuls.length,actifs=CONFIG.filleuls.filter(f=>f.actif).length;
-  const gains=CONFIG.filleuls.reduce((s,f)=>s+f.gain,0);
-  document.getElementById('total-filleuls').textContent=total;
-  document.getElementById('actifs-count').textContent=actifs;
-  document.getElementById('gains-total').textContent=gains.toLocaleString();
-  document.getElementById('gains-display').textContent=gains.toLocaleString()+' XAF';
-  document.getElementById('filleuls-count').textContent=total+' membre'+(total>1?'s':'');
-  renderFilleuls(CONFIG.filleuls);
+const token = localStorage.getItem('token');
+let ALL_FILLEULS = [];
+let MON_CODE = '';
+
+async function init(){
+  if(!token){ location.href='/'; return; }
+  try {
+    const r = await fetch('/api/equipe', {headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){ showToast('Erreur chargement équipe', true); return; }
+    const d = await r.json();
+
+    MON_CODE = d.mon_code || '';
+    document.getElementById('mon-code').textContent = MON_CODE;
+
+    document.getElementById('pct-n1').textContent = d.commissions.n1 + '%';
+    document.getElementById('pct-n2').textContent = d.commissions.n2 + '%';
+    document.getElementById('pct-n3').textContent = d.commissions.n3 + '%';
+    document.getElementById('regle-n1').textContent = d.commissions.n1 + '% (N1)';
+    document.getElementById('regle-n2').textContent = d.commissions.n2 + '% (N2)';
+    document.getElementById('regle-n3').textContent = d.commissions.n3 + '% (N3)';
+
+    document.getElementById('gains-n1').textContent = (d.gains.n1||0).toLocaleString();
+    document.getElementById('gains-n2').textContent = (d.gains.n2||0).toLocaleString();
+    document.getElementById('gains-n3').textContent = (d.gains.n3||0).toLocaleString();
+    document.getElementById('gains-total').textContent = (d.gains.total||0).toLocaleString();
+    document.getElementById('gains-display').textContent = (d.gains.total||0).toLocaleString()+' XAF';
+
+    ALL_FILLEULS = d.filleuls || [];
+    const total = ALL_FILLEULS.length;
+    const actifs = ALL_FILLEULS.filter(f=>f.actif).length;
+    document.getElementById('total-filleuls').textContent = total;
+    document.getElementById('actifs-count').textContent = actifs;
+    document.getElementById('filleuls-count').textContent = total+' membre'+(total>1?'s':'');
+
+    // Affiche le champ pour ajouter un parrain seulement si l'utilisateur n'en a pas déjà un
+    if(!d.a_deja_un_parrain){
+      document.getElementById('parrain-card').style.display = 'block';
+    }
+
+    renderFilleuls(ALL_FILLEULS);
+  } catch(e) {
+    showToast('Erreur réseau', true);
+  }
 }
+
 function renderFilleuls(list){
   const c=document.getElementById('filleuls-list');
   if(list.length===0){
@@ -174,23 +219,55 @@ function renderFilleuls(list){
   }
   c.innerHTML='';
   list.forEach(f=>{
-    const ini=f.nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const ini=(f.nom||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     const lc=['','fl1','fl2','fl3'][f.niveau]||'fl1';
-    c.innerHTML+=`<div class="filleul-item"><div class="filleul-avatar">${ini}</div><div><div class="filleul-name">${f.nom}</div><div class="filleul-date">${f.tel} · ${f.date}</div><span class="filleul-level ${lc}">Niveau ${f.niveau}</span></div><div class="filleul-gain"><div class="filleul-gain-val">+${f.gain.toLocaleString()}</div><div class="filleul-gain-lbl">XAF gagné</div></div></div>`;
+    const dateAffichee = f.date ? new Date(f.date).toLocaleDateString('fr') : '';
+    c.innerHTML+=`<div class="filleul-item">
+      <div class="filleul-avatar">${ini}</div>
+      <div><div class="filleul-name">${f.nom}</div><div class="filleul-date">${f.telephone||''} · ${dateAffichee}</div><span class="filleul-level ${lc}">Niveau ${f.niveau}</span></div>
+      <div class="filleul-gain"><div class="filleul-gain-val" style="color:${f.actif?'var(--green)':'var(--muted)'}">${f.actif?'✅ Actif':'○ Inactif'}</div></div>
+    </div>`;
   });
 }
+
 function filterLevel(level,btn){
   document.querySelectorAll('.tab-s').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderFilleuls(level==='all'?CONFIG.filleuls:CONFIG.filleuls.filter(f=>String(f.niveau)===level));
+  renderFilleuls(level==='all'?ALL_FILLEULS:ALL_FILLEULS.filter(f=>String(f.niveau)===level));
 }
-function copyCode(){navigator.clipboard.writeText(CONFIG.monCode).catch(()=>{});showToast('✅ Code copié : '+CONFIG.monCode);}
+
+function copyCode(){navigator.clipboard.writeText(MON_CODE).catch(()=>{});showToast('✅ Code copié : '+MON_CODE);}
 function shareCode(){
-  const msg=`🌬️ Rejoins AEROWATT !\nCode : ${CONFIG.monCode}\n👉 https://aerowatt.vercel.app`;
+  const msg=`🌬️ Rejoins AEROWATT !\nCode : ${MON_CODE}\n👉 https://aerowatt.vercel.app`;
   if(navigator.share){navigator.share({title:'AEROWATT',text:msg});}
   else{navigator.clipboard.writeText(msg).catch(()=>{});showToast('✅ Lien copié !');}
 }
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+async function lierParrain(){
+  const code = document.getElementById('parrain-code-input').value.trim();
+  if(!code){ showToast('Entrez un code', true); return; }
+  try {
+    const r = await fetch('/api/parrainage/lier', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({code})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ showToast(d.detail || 'Erreur', true); return; }
+    showToast('✅ Parrain lié avec succès !');
+    document.getElementById('parrain-card').style.display = 'none';
+  } catch(e) {
+    showToast('Erreur réseau', true);
+  }
+}
+
+function showToast(msg, error=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background = error ? '#FF3B30' : 'var(--dark)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
 init();
 </script>
 </body>
