@@ -196,8 +196,10 @@ async def investir(data: dict, user: dict = Depends(get_current_user)):
         "revenu_quotidien": data.get("revenu_quotidien", 0),
         "revenu_total": data.get("revenu_total", 0),
         "cycle_jours": cycle_jours,
-        "date_debut": date_debut.isoformat(),  # corrigé : manquait, cassait le calcul de progression côté frontend
+        "date_debut": date_debut.isoformat(),
         "date_fin": date_fin.isoformat(),
+        "type_versement": "fin_contrat",  # les plans de /dashboard versent en une fois à la fin du cycle
+        "jours_verses": 0,
         "actif": True
     }).execute()
 
@@ -213,3 +215,97 @@ async def investir(data: dict, user: dict = Depends(get_current_user)):
     }).execute()
 
     return {"message": "Investissement confirmé", "nouveau_solde": nouveau_solde}
+
+
+# ── VERSEMENT AUTOMATIQUE DES GAINS (appelé chaque jour par un cron Vercel) ──
+
+import os
+
+@app.post("/api/cron/verser-revenus")
+async def verser_revenus(secret: str = ""):
+    """
+    Parcourt tous les investissements actifs et verse les gains :
+    - type_versement='quotidien' (plans de /revenu) : crédite le revenu du jour,
+      pour chaque jour écoulé depuis le dernier versement, jusqu'à la fin du cycle.
+    - type_versement='fin_contrat' (plans de /dashboard) : crédite le revenu total
+      en une seule fois, une fois le cycle terminé.
+    Protégé par un secret (variable d'env CRON_SECRET) pour empêcher un déclenchement
+    public non autorisé qui créditerait les comptes en boucle.
+    """
+    cron_secret = os.getenv("CRON_SECRET", "")
+    if cron_secret and secret != cron_secret:
+        raise HTTPException(403, "Non autorisé")
+
+    now = datetime.utcnow()
+    resultats = {"quotidien_verses": 0, "fin_contrat_verses": 0, "erreurs": []}
+
+    # ── Plans à versement quotidien ──
+    quotidiens = supabase.table("investments").select("*").eq("actif", True).eq("type_versement", "quotidien").execute()
+    for inv in quotidiens.data:
+        try:
+            date_debut = datetime.fromisoformat(inv["date_debut"].replace("Z", "+00:00")).replace(tzinfo=None)
+            cycle_jours = inv["cycle_jours"]
+            jours_deja_verses = inv.get("jours_verses", 0)
+            jours_dus = min((now - date_debut).days, cycle_jours)
+
+            if jours_dus > jours_deja_verses:
+                nb_jours_a_payer = jours_dus - jours_deja_verses
+                gain = nb_jours_a_payer * inv["revenu_quotidien"]
+
+                user = supabase.table("users").select("solde").eq("id", inv["user_id"]).execute()
+                if not user.data:
+                    continue
+                nouveau_solde = (user.data[0]["solde"] or 0) + gain
+                supabase.table("users").update({"solde": nouveau_solde}).eq("id", inv["user_id"]).execute()
+
+                termine = jours_dus >= cycle_jours
+                supabase.table("investments").update({
+                    "jours_verses": jours_dus,
+                    "dernier_versement": now.isoformat(),
+                    "actif": not termine
+                }).eq("id", inv["id"]).execute()
+
+                supabase.table("transactions").insert({
+                    "user_id": inv["user_id"],
+                    "type": "revenu_quotidien",
+                    "montant": gain,
+                    "statut": "approuve",
+                    "note": inv.get("plan_nom", "")
+                }).execute()
+
+                resultats["quotidien_verses"] += 1
+        except Exception as e:
+            resultats["erreurs"].append(f"investment {inv.get('id')}: {str(e)}")
+
+    # ── Plans à versement en fin de contrat ──
+    fins_contrat = supabase.table("investments").select("*").eq("actif", True).eq("type_versement", "fin_contrat").execute()
+    for inv in fins_contrat.data:
+        try:
+            date_fin = datetime.fromisoformat(inv["date_fin"].replace("Z", "+00:00")).replace(tzinfo=None)
+            if now >= date_fin:
+                gain = inv["revenu_total"]
+
+                user = supabase.table("users").select("solde").eq("id", inv["user_id"]).execute()
+                if not user.data:
+                    continue
+                nouveau_solde = (user.data[0]["solde"] or 0) + gain
+                supabase.table("users").update({"solde": nouveau_solde}).eq("id", inv["user_id"]).execute()
+
+                supabase.table("investments").update({
+                    "actif": False,
+                    "dernier_versement": now.isoformat()
+                }).eq("id", inv["id"]).execute()
+
+                supabase.table("transactions").insert({
+                    "user_id": inv["user_id"],
+                    "type": "revenu_fin_contrat",
+                    "montant": gain,
+                    "statut": "approuve",
+                    "note": inv.get("plan_nom", "")
+                }).execute()
+
+                resultats["fin_contrat_verses"] += 1
+        except Exception as e:
+            resultats["erreurs"].append(f"investment {inv.get('id')}: {str(e)}")
+
+    return resultats
