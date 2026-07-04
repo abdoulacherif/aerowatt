@@ -14,7 +14,7 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/verser-revenus?secret=CHANGE_MOI_SECRET_CRON",
+      "path": "/api/cron/verser-revenus?secret=iQWKwu_UULSdorUW_AzzFoeeFcNsWXeX",
       "schedule": "5 0 * * *"
     }
   ]
