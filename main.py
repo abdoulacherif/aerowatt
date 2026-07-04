@@ -309,3 +309,96 @@ async def verser_revenus(secret: str = ""):
             resultats["erreurs"].append(f"investment {inv.get('id')}: {str(e)}")
 
     return resultats
+
+
+# ── PARRAINAGE ──
+
+@app.post("/api/parrainage/lier")
+async def lier_parrainage(data: dict, user: dict = Depends(get_current_user)):
+    """
+    Permet à un utilisateur d'ajouter un code de parrainage après son inscription,
+    depuis son profil. Refusé si un parrain est déjà défini, si le code n'existe pas,
+    ou si l'utilisateur essaie de se parrainer lui-même.
+    """
+    if user.get("parrain_id"):
+        raise HTTPException(400, "Vous avez déjà un parrain, impossible d'en changer")
+
+    code = (data.get("code") or "").strip()
+    if not code:
+        raise HTTPException(400, "Code de parrainage requis")
+
+    parrain = supabase.table("users").select("id, nom").eq("mon_code", code).execute()
+    if not parrain.data:
+        raise HTTPException(404, "Code de parrainage introuvable")
+
+    parrain_id = parrain.data[0]["id"]
+    if parrain_id == user["id"]:
+        raise HTTPException(400, "Vous ne pouvez pas utiliser votre propre code")
+
+    supabase.table("users").update({"parrain_id": parrain_id}).eq("id", user["id"]).execute()
+    return {"message": "Parrain lié avec succès", "parrain_nom": parrain.data[0]["nom"]}
+
+
+@app.get("/api/equipe")
+async def get_equipe(user: dict = Depends(get_current_user)):
+    """
+    Retourne le code de parrainage réel de l'utilisateur, ses filleuls sur 3 niveaux,
+    et le détail de ses commissions gagnées (calculées à partir des transactions
+    de type commission_n1/n2/n3 qui lui sont créditées).
+    """
+    def get_filleuls(parent_ids):
+        if not parent_ids:
+            return []
+        res = supabase.table("users").select("id, nom, telephone, created_at").in_("parrain_id", parent_ids).execute()
+        return res.data or []
+
+    niveau1 = get_filleuls([user["id"]])
+    ids_n1 = [f["id"] for f in niveau1]
+    niveau2 = get_filleuls(ids_n1)
+    ids_n2 = [f["id"] for f in niveau2]
+    niveau3 = get_filleuls(ids_n2)
+
+    # Détermine qui est "actif" (au moins un investissement) parmi tous les filleuls
+    tous_ids = ids_n1 + [f["id"] for f in niveau2] + [f["id"] for f in niveau3]
+    actifs_ids = set()
+    if tous_ids:
+        invs = supabase.table("investments").select("user_id").in_("user_id", tous_ids).execute()
+        actifs_ids = {i["user_id"] for i in (invs.data or [])}
+
+    def format_filleul(f, niveau):
+        return {
+            "nom": f["nom"],
+            "telephone": f["telephone"],
+            "niveau": niveau,
+            "actif": f["id"] in actifs_ids,
+            "date": f["created_at"]
+        }
+
+    filleuls = (
+        [format_filleul(f, 1) for f in niveau1] +
+        [format_filleul(f, 2) for f in niveau2] +
+        [format_filleul(f, 3) for f in niveau3]
+    )
+
+    # Commissions gagnées par niveau
+    commissions_tx = supabase.table("transactions").select("type, montant").eq("user_id", user["id"]).in_(
+        "type", ["commission_n1", "commission_n2", "commission_n3"]
+    ).execute()
+    gains_n1 = sum(t["montant"] for t in (commissions_tx.data or []) if t["type"] == "commission_n1")
+    gains_n2 = sum(t["montant"] for t in (commissions_tx.data or []) if t["type"] == "commission_n2")
+    gains_n3 = sum(t["montant"] for t in (commissions_tx.data or []) if t["type"] == "commission_n3")
+
+    cfg = supabase.table("config").select("*").execute()
+    cfg_map = {row["cle"]: row["valeur"] for row in (cfg.data or [])}
+
+    return {
+        "mon_code": user.get("mon_code", ""),
+        "a_deja_un_parrain": bool(user.get("parrain_id")),
+        "commissions": {
+            "n1": cfg_map.get("commission_n1", "20"),
+            "n2": cfg_map.get("commission_n2", "8"),
+            "n3": cfg_map.get("commission_n3", "3")
+        },
+        "gains": {"n1": gains_n1, "n2": gains_n2, "n3": gains_n3, "total": gains_n1 + gains_n2 + gains_n3},
+        "filleuls": filleuls
+    }
