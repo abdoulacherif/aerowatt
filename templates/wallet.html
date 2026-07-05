@@ -130,7 +130,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <div class="methods" id="auto-methods"></div>
     </div>
     <div class="form-group">
-      <label class="form-label">Montant (XOF)</label>
+      <label class="form-label" id="auto-montant-label">Montant (XOF)</label>
       <input type="number" class="form-input" id="auto-montant" placeholder="Minimum 500 XOF">
     </div>
     <button class="submit-btn btn-orange" id="auto-submit-btn" onclick="lancerLeekPay()">
@@ -261,29 +261,29 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const TOKEN = localStorage.getItem('token');
 
 // ── PAYS & OPÉRATEURS ──
-// xofAuto:true = zone XOF, éligible au dépôt automatique LeekPay (seule devise CFA supportée par LeekPay).
-// Les autres pays n'ont accès qu'au dépôt manuel pour l'instant.
+// Tous les pays sont éligibles au dépôt automatique LeekPay.
+// devise : XOF pour la zone UEMOA, USD pour les autres (LeekPay ne supporte que XOF/EUR/USD).
 const PAYS = [
-  {code:'SN', nom:"Sénégal", dial:'+221', xofAuto:true, operateurs:['Orange Money','Wave','Free Money']},
-  {code:'CI', nom:"Côte d'Ivoire", dial:'+225', xofAuto:true, operateurs:['Orange Money','MTN Money','Moov Money','Wave']},
-  {code:'ML', nom:"Mali", dial:'+223', xofAuto:true, operateurs:['Orange Money','Moov Money']},
-  {code:'BF', nom:"Burkina Faso", dial:'+226', xofAuto:true, operateurs:['Orange Money','Moov Money']},
-  {code:'NE', nom:"Niger", dial:'+227', xofAuto:true, operateurs:['Orange Money','Moov Money']},
-  {code:'BJ', nom:"Bénin", dial:'+229', xofAuto:true, operateurs:['MTN Money','Moov Money']},
-  {code:'TG', nom:"Togo", dial:'+228', xofAuto:true, operateurs:['Togocom T-Money','Moov Flooz']},
-  {code:'GA', nom:"Gabon", dial:'+241', xofAuto:false, operateurs:['Airtel Money','Moov Money']},
-  {code:'CM', nom:"Cameroun", dial:'+237', xofAuto:false, operateurs:['Orange Money','MTN Mobile Money']},
-  {code:'CG', nom:"Congo-Brazzaville", dial:'+242', xofAuto:false, operateurs:['Airtel Money','MTN Mobile Money']},
-  {code:'CD', nom:"RD Congo", dial:'+243', xofAuto:false, operateurs:['Orange Money','Airtel Money','M-Pesa']},
-  {code:'UG', nom:"Ouganda", dial:'+256', xofAuto:false, operateurs:['MTN Mobile Money','Airtel Money']},
-  {code:'KE', nom:"Kenya", dial:'+254', xofAuto:false, operateurs:['M-Pesa','Airtel Money']},
-  {code:'RW', nom:"Rwanda", dial:'+250', xofAuto:false, operateurs:['MTN Mobile Money','Airtel Money']},
-  {code:'ZM', nom:"Zambie", dial:'+260', xofAuto:false, operateurs:['MTN Mobile Money','Airtel Money']},
-  {code:'GH', nom:"Ghana", dial:'+233', xofAuto:false, operateurs:['MTN Mobile Money','Vodafone Cash','AirtelTigo Money']},
+  {code:'SN', nom:"Sénégal", dial:'+221', devise:'XOF', operateurs:['Orange Money','Wave','Free Money']},
+  {code:'CI', nom:"Côte d'Ivoire", dial:'+225', devise:'XOF', operateurs:['Orange Money','MTN Money','Moov Money','Wave']},
+  {code:'ML', nom:"Mali", dial:'+223', devise:'XOF', operateurs:['Orange Money','Moov Money']},
+  {code:'BF', nom:"Burkina Faso", dial:'+226', devise:'XOF', operateurs:['Orange Money','Moov Money']},
+  {code:'NE', nom:"Niger", dial:'+227', devise:'XOF', operateurs:['Orange Money','Moov Money']},
+  {code:'BJ', nom:"Bénin", dial:'+229', devise:'XOF', operateurs:['MTN Money','Moov Money']},
+  {code:'TG', nom:"Togo", dial:'+228', devise:'XOF', operateurs:['Togocom T-Money','Moov Flooz']},
+  {code:'GA', nom:"Gabon", dial:'+241', devise:'USD', operateurs:['Airtel Money','Moov Money']},
+  {code:'CM', nom:"Cameroun", dial:'+237', devise:'USD', operateurs:['Orange Money','MTN Mobile Money']},
+  {code:'CG', nom:"Congo-Brazzaville", dial:'+242', devise:'USD', operateurs:['Airtel Money','MTN Mobile Money']},
+  {code:'CD', nom:"RD Congo", dial:'+243', devise:'USD', operateurs:['Orange Money','Airtel Money','M-Pesa']},
+  {code:'UG', nom:"Ouganda", dial:'+256', devise:'USD', operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'KE', nom:"Kenya", dial:'+254', devise:'USD', operateurs:['M-Pesa','Airtel Money']},
+  {code:'RW', nom:"Rwanda", dial:'+250', devise:'USD', operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'ZM', nom:"Zambie", dial:'+260', devise:'USD', operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'GH', nom:"Ghana", dial:'+233', devise:'USD', operateurs:['MTN Mobile Money','Vodafone Cash','AirtelTigo Money']},
 ];
 const FLAGS = {SN:'🇸🇳',CI:'🇨🇮',ML:'🇲🇱',BF:'🇧🇫',NE:'🇳🇪',BJ:'🇧🇯',TG:'🇹🇬',GA:'🇬🇦',CM:'🇨🇲',CG:'🇨🇬',CD:'🇨🇩',UG:'🇺🇬',KE:'🇰🇪',RW:'🇷🇼',ZM:'🇿🇲',GH:'🇬🇭'};
 
-let selectedAutoPays = PAYS.find(p=>p.xofAuto);
+let selectedAutoPays = PAYS[0];
 let selectedAutoMethod = selectedAutoPays.operateurs[0];
 let selectedManuelDepotPays = PAYS[0];
 let selectedManuelDepotMethod = PAYS[0].operateurs[0];
@@ -312,16 +312,21 @@ function renderMethodButtons(containerId, pays, selected, onSelect){
 
 // ── DÉPÔT AUTOMATIQUE ──
 function initAutoPays(){
-  const paysAuto = PAYS.filter(p=>p.xofAuto);
-  remplirSelectPays('auto-pays', paysAuto);
+  remplirSelectPays('auto-pays', PAYS);
   document.getElementById('auto-pays').value = selectedAutoPays.code;
   renderMethodButtons('auto-methods', selectedAutoPays, selectedAutoMethod, 'selectAutoMethod');
+  updateAutoDeviseLabel();
+}
+function updateAutoDeviseLabel(){
+  document.getElementById('auto-montant-label').textContent = 'Montant ('+selectedAutoPays.devise+')';
+  document.getElementById('auto-montant').placeholder = selectedAutoPays.devise==='XOF' ? 'Minimum 500 XOF' : 'Minimum 1 '+selectedAutoPays.devise;
 }
 function onAutoPaysChange(){
   const code = document.getElementById('auto-pays').value;
   selectedAutoPays = PAYS.find(p=>p.code===code);
   selectedAutoMethod = selectedAutoPays.operateurs[0];
   renderMethodButtons('auto-methods', selectedAutoPays, selectedAutoMethod, 'selectAutoMethod');
+  updateAutoDeviseLabel();
 }
 function selectAutoMethod(op, btn){
   selectedAutoMethod = op;
@@ -433,8 +438,10 @@ function switchTab(tab){
 // Ici, on pré-remplit juste la référence de paiement automatiquement au lieu de la saisie manuelle.
 function lancerLeekPay(){
   const montant = parseInt(document.getElementById('auto-montant').value);
-  if(!montant || montant < 500){
-    showModal('⚠️','Montant insuffisant','Minimum 500 XOF');
+  const devise = selectedAutoPays.devise;
+  const minimum = devise==='XOF' ? 500 : 1;
+  if(!montant || montant < minimum){
+    showModal('⚠️','Montant insuffisant','Minimum '+minimum+' '+devise);
     return;
   }
   if(typeof LeekPay === 'undefined'){
@@ -443,7 +450,7 @@ function lancerLeekPay(){
   }
   LeekPay.checkout({
     amount: montant,
-    currency: 'XOF',
+    currency: devise,
     apiKey: LEEKPAY_PUBLIC_KEY,
     description: 'Dépôt AEROWATT - '+selectedAutoMethod+' - '+selectedAutoPays.nom,
     onSuccess: async function(data){
