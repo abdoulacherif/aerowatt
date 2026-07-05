@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AEROWATT — Support</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--dark:#0D1827;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8;--green:#00B86B}
+body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh}
+.top-bar{background:linear-gradient(135deg,var(--dark),#0A1E3A);padding:16px 18px;display:flex;align-items:center;gap:12px}
+.top-title{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;flex:1;text-align:center}
+.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hero{text-align:center;padding:32px 24px 8px}
+.hero-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px}
+.hero-title{font-size:18px;font-weight:800;color:var(--black);margin-bottom:6px}
+.hero-sub{font-size:13px;color:var(--muted);line-height:1.5}
+.options{padding:20px 16px}
+.option-card{background:#fff;border-radius:18px;padding:20px;margin-bottom:14px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;text-decoration:none;cursor:pointer;box-shadow:0 2px 12px rgba(0,102,255,0.06)}
+.option-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.icon-whatsapp{background:rgba(37,211,102,0.12)}
+.icon-telegram{background:rgba(0,136,204,0.12)}
+.option-info{flex:1}
+.option-title{font-size:15px;font-weight:800;color:var(--black);margin-bottom:3px}
+.option-desc{font-size:12px;color:var(--muted);line-height:1.4}
+.option-arrow{color:var(--muted)}
+.note{margin:8px 16px 24px;text-align:center;font-size:11px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <button class="back-btn" onclick="location.href='/dashboard'"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+  <div class="top-title">SUPPORT</div>
+  <div style="width:34px"></div>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">🎧</div>
+  <div class="hero-title">Besoin d'aide ?</div>
+  <div class="hero-sub">Notre équipe est disponible pour répondre<br>à toutes vos questions.</div>
+</div>
+
+<div class="options">
+  <a class="option-card" id="whatsapp-link" href="#" target="_blank" rel="noopener">
+    <div class="option-icon icon-whatsapp">💬</div>
+    <div class="option-info">
+      <div class="option-title">Service client WhatsApp</div>
+      <div class="option-desc">Discutez directement avec notre équipe</div>
+    </div>
+    <svg class="option-arrow" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+  </a>
+
+  <a class="option-card" href="https://t.me/+AnXXaRQ70C4xNzM0" target="_blank" rel="noopener">
+    <div class="option-icon icon-telegram">📣</div>
+    <div class="option-info">
+      <div class="option-title">Canal Telegram</div>
+      <div class="option-desc">Rejoignez notre communauté et suivez nos annonces</div>
+    </div>
+    <svg class="option-arrow" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+  </a>
+</div>
+
+<div class="note">Nos équipes répondent généralement sous quelques minutes, 24h/24 et 7j/7.</div>
+
+<script>
+// Le numéro n'est jamais affiché en clair dans le HTML : construit dynamiquement en JS.
+(function(){
+  const numero = ['2','3','7','6','9','1','6','4','3','1','9','8'].join('');
+  document.getElementById('whatsapp-link').href = 'https://wa.me/' + numero;
+})();
+</script>
+</body>
+</html>
