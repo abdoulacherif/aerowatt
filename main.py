@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 from config import supabase, SECRET_KEY, ALGORITHM
@@ -163,6 +163,12 @@ async def demander_retrait(data: dict, user: dict = Depends(get_current_user)):
         raise HTTPException(400, "Montant invalide")
     if montant > solde:
         raise HTTPException(400, "Solde insuffisant")
+
+    # Retraits limités à 8h-18h, du lundi au vendredi (heure du Tchad, UTC+1).
+    # Message volontairement générique : la règle n'est jamais explicitée côté client.
+    heure_tchad = datetime.now(timezone(timedelta(hours=1)))
+    if heure_tchad.weekday() >= 5 or not (8 <= heure_tchad.hour < 18):
+        raise HTTPException(400, "Retrait indisponible pour le moment. Réessayez plus tard.")
 
     # Condition : l'utilisateur doit avoir investi dans au moins un plan pour retirer
     invs = supabase.table("investments").select("id").eq("user_id", user["id"]).limit(1).execute()
