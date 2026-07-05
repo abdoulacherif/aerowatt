@@ -5,7 +5,6 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>AEROWATT — Wallet</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -34,15 +33,14 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .form-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:16px;display:flex;align-items:center;gap:8px}
 .form-group{margin-bottom:14px}
 .form-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block}
-.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--black);outline:none;transition:border-color .25s}
-.form-input:focus{border-color:var(--cyan)}
+.form-input,.form-select{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--black);outline:none;transition:border-color .25s}
+.form-input:focus,.form-select:focus{border-color:var(--cyan)}
 .form-input::placeholder{color:#C0CEDF}
 .methods{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:4px}
 .method-btn{padding:12px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:all .2s;font-family:'Nunito',sans-serif}
 .method-btn.active{border-color:var(--blue);background:rgba(0,102,255,0.05)}
 .method-logo{font-size:22px;margin-bottom:4px}
 .method-name{font-size:11px;font-weight:800;color:var(--black)}
-.method-num{font-size:10px;color:var(--muted);margin-top:2px}
 .submit-btn{width:100%;padding:15px;border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s}
 .submit-btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-orange{background:linear-gradient(135deg,var(--orange),var(--orange2));box-shadow:0 6px 20px rgba(255,107,0,0.35)}
@@ -50,6 +48,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 .info-box{margin-top:14px;background:var(--bg);border-radius:12px;padding:12px 14px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6}
 .info-box strong{color:var(--black)}
 .lock-box{display:none;background:rgba(255,59,48,0.07);border:1.5px solid rgba(255,59,48,0.25);border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:#C0392B;line-height:1.6;font-weight:600}
+.subtabs{display:flex;gap:8px;margin:0 16px 14px}
+.subtab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:800;border-radius:10px;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted)}
+.subtab.active{border-color:var(--blue);background:rgba(0,102,255,0.06);color:var(--blue)}
+.badge-auto{display:inline-block;font-size:9px;font-weight:800;background:rgba(0,184,107,0.15);color:var(--green);padding:2px 8px;border-radius:10px;margin-left:6px}
 .hist-section{margin:0 16px}
 .hist-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:12px}
 .hist-item{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
@@ -108,38 +110,58 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 
 <!-- DEPOT -->
 <div class="panel active" id="panel-depot">
-  <div class="form-card">
+  <div class="subtabs">
+    <div class="subtab active" id="subtab-auto" onclick="switchDepotMode('auto')">⚡ Automatique</div>
+    <div class="subtab" id="subtab-manuel" onclick="switchDepotMode('manuel')">✍️ Manuel</div>
+  </div>
+
+  <!-- DÉPÔT AUTOMATIQUE (LeekPay) -->
+  <div id="depot-auto" class="form-card">
+    <div class="form-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#00B86B"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 18v4h6l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95z"/></svg>
+      Rechargement instantané<span class="badge-auto">AUTO</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pays</label>
+      <select class="form-select" id="auto-pays" onchange="onAutoPaysChange()"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Opérateur</label>
+      <div class="methods" id="auto-methods"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Montant (XOF)</label>
+      <input type="number" class="form-input" id="auto-montant" placeholder="Minimum 500 XOF">
+    </div>
+    <button class="submit-btn btn-orange" id="auto-submit-btn" onclick="lancerLeekPay()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 18v4h6l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95z"/></svg>
+      Recharger
+    </button>
+    <div class="info-box">
+      <strong>Comment ça marche :</strong><br>
+      1. Choisissez votre pays et opérateur<br>
+      2. Entrez le montant et appuyez sur Recharger<br>
+      3. La fenêtre LeekPay s'ouvre pour finaliser le paiement<br>
+      4. Validation par notre équipe sous quelques minutes
+    </div>
+  </div>
+
+  <!-- DÉPÔT MANUEL (ancien formulaire, pour tous les pays) -->
+  <div id="depot-manuel" class="form-card" style="display:none">
     <div class="form-title">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-      Effectuer un dépôt
+      Dépôt manuel
     </div>
     <div class="form-group">
-      <label class="form-label">Méthode de paiement</label>
-      <div class="methods" id="depot-methods">
-        <div class="method-btn active" onclick="selectMethod(this,'Orange Money','depot')">
-          <div class="method-logo">🟠</div>
-          <div class="method-name">Orange Money</div>
-          <div class="method-num" id="om-num">Chargement...</div>
-        </div>
-        <div class="method-btn" onclick="selectMethod(this,'Wave','depot')">
-          <div class="method-logo">🌊</div>
-          <div class="method-name">Wave</div>
-          <div class="method-num" id="wave-num">Chargement...</div>
-        </div>
-        <div class="method-btn" onclick="selectMethod(this,'MTN','depot')">
-          <div class="method-logo">💛</div>
-          <div class="method-name">MTN Money</div>
-          <div class="method-num" id="mtn-num">Chargement...</div>
-        </div>
-        <div class="method-btn" onclick="selectMethod(this,'Moov','depot')">
-          <div class="method-logo">🔵</div>
-          <div class="method-name">Moov Money</div>
-          <div class="method-num" id="moov-num">Chargement...</div>
-        </div>
-      </div>
+      <label class="form-label">Pays</label>
+      <select class="form-select" id="manuel-depot-pays" onchange="onManuelDepotPaysChange()"></select>
     </div>
     <div class="form-group">
-      <label class="form-label">Montant (XAF)</label>
+      <label class="form-label">Opérateur</label>
+      <div class="methods" id="manuel-depot-methods"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Montant</label>
       <input type="number" class="form-input" id="depot-montant" placeholder="Minimum 4,000 XAF">
     </div>
     <div class="form-group">
@@ -156,7 +178,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     </button>
     <div class="info-box">
       <strong>Comment déposer :</strong><br>
-      1. Envoyez le montant sur le numéro <strong id="info-num-depot">Orange Money</strong><br>
+      1. Envoyez le montant sur le numéro affiché après avoir choisi pays/opérateur<br>
       2. Entrez votre numéro et la référence<br>
       3. Validation sous 5-30 minutes
     </div>
@@ -174,28 +196,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       🔒 Vous devez investir dans au moins un plan avant de pouvoir effectuer un retrait.
     </div>
     <div class="form-group">
-      <label class="form-label">Méthode de retrait</label>
-      <div class="methods" id="retrait-methods">
-        <div class="method-btn active" onclick="selectMethod(this,'Orange Money','retrait')">
-          <div class="method-logo">🟠</div>
-          <div class="method-name">Orange Money</div>
-        </div>
-        <div class="method-btn" onclick="selectMethod(this,'Wave','retrait')">
-          <div class="method-logo">🌊</div>
-          <div class="method-name">Wave</div>
-        </div>
-        <div class="method-btn" onclick="selectMethod(this,'MTN','retrait')">
-          <div class="method-logo">💛</div>
-          <div class="method-name">MTN Money</div>
-        </div>
-        <div class="method-btn" onclick="selectMethod(this,'Moov','retrait')">
-          <div class="method-logo">🔵</div>
-          <div class="method-name">Moov Money</div>
-        </div>
-      </div>
+      <label class="form-label">Pays</label>
+      <select class="form-select" id="retrait-pays" onchange="onRetraitPaysChange()"></select>
     </div>
     <div class="form-group">
-      <label class="form-label">Montant à retirer (XAF)</label>
+      <label class="form-label">Opérateur</label>
+      <div class="methods" id="retrait-methods"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Montant à retirer</label>
       <input type="number" class="form-input" id="retrait-montant" placeholder="Minimum 1,200 XAF">
     </div>
     <div class="form-group">
@@ -244,24 +253,130 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   <a class="nav-item" href="/profil"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.8 4-4s-1.3-4-4-4-4 1.8-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Moi</span></a>
 </div>
 
+<script src="https://leekpay.fr/js/leekpay.js"></script>
 <script>
+const LEEKPAY_PUBLIC_KEY = 'pk_live_h0RQu365IhnhdXkW2YeWZiDmKQGo7Pn1';
 const SUPABASE_URL='https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 const TOKEN = localStorage.getItem('token');
-let selectedDepotMethod = 'Orange Money';
-let selectedRetraitMethod = 'Orange Money';
+
+// ── PAYS & OPÉRATEURS ──
+// xofAuto:true = zone XOF, éligible au dépôt automatique LeekPay (seule devise CFA supportée par LeekPay).
+// Les autres pays n'ont accès qu'au dépôt manuel pour l'instant.
+const PAYS = [
+  {code:'SN', nom:"Sénégal", dial:'+221', xofAuto:true, operateurs:['Orange Money','Wave','Free Money']},
+  {code:'CI', nom:"Côte d'Ivoire", dial:'+225', xofAuto:true, operateurs:['Orange Money','MTN Money','Moov Money','Wave']},
+  {code:'ML', nom:"Mali", dial:'+223', xofAuto:true, operateurs:['Orange Money','Moov Money']},
+  {code:'BF', nom:"Burkina Faso", dial:'+226', xofAuto:true, operateurs:['Orange Money','Moov Money']},
+  {code:'NE', nom:"Niger", dial:'+227', xofAuto:true, operateurs:['Orange Money','Moov Money']},
+  {code:'BJ', nom:"Bénin", dial:'+229', xofAuto:true, operateurs:['MTN Money','Moov Money']},
+  {code:'TG', nom:"Togo", dial:'+228', xofAuto:true, operateurs:['Togocom T-Money','Moov Flooz']},
+  {code:'GA', nom:"Gabon", dial:'+241', xofAuto:false, operateurs:['Airtel Money','Moov Money']},
+  {code:'CM', nom:"Cameroun", dial:'+237', xofAuto:false, operateurs:['Orange Money','MTN Mobile Money']},
+  {code:'CG', nom:"Congo-Brazzaville", dial:'+242', xofAuto:false, operateurs:['Airtel Money','MTN Mobile Money']},
+  {code:'CD', nom:"RD Congo", dial:'+243', xofAuto:false, operateurs:['Orange Money','Airtel Money','M-Pesa']},
+  {code:'UG', nom:"Ouganda", dial:'+256', xofAuto:false, operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'KE', nom:"Kenya", dial:'+254', xofAuto:false, operateurs:['M-Pesa','Airtel Money']},
+  {code:'RW', nom:"Rwanda", dial:'+250', xofAuto:false, operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'ZM', nom:"Zambie", dial:'+260', xofAuto:false, operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'GH', nom:"Ghana", dial:'+233', xofAuto:false, operateurs:['MTN Mobile Money','Vodafone Cash','AirtelTigo Money']},
+];
+const FLAGS = {SN:'🇸🇳',CI:'🇨🇮',ML:'🇲🇱',BF:'🇧🇫',NE:'🇳🇪',BJ:'🇧🇯',TG:'🇹🇬',GA:'🇬🇦',CM:'🇨🇲',CG:'🇨🇬',CD:'🇨🇩',UG:'🇺🇬',KE:'🇰🇪',RW:'🇷🇼',ZM:'🇿🇲',GH:'🇬🇭'};
+
+let selectedAutoPays = PAYS.find(p=>p.xofAuto);
+let selectedAutoMethod = selectedAutoPays.operateurs[0];
+let selectedManuelDepotPays = PAYS[0];
+let selectedManuelDepotMethod = PAYS[0].operateurs[0];
+let selectedRetraitPays = PAYS[0];
+let selectedRetraitMethod = PAYS[0].operateurs[0];
+
 let userSolde = 0;
 let userID = '';
 let minDepot = 4000;
 let minRetrait = 1200;
-let numerosConfig = {};
 let hasInvested = false;
+
+function remplirSelectPays(selectId, options){
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = options.map(p=>`<option value="${p.code}">${FLAGS[p.code]||''} ${p.nom} (${p.dial})</option>`).join('');
+}
+
+function renderMethodButtons(containerId, pays, selected, onSelect){
+  const c = document.getElementById(containerId);
+  c.innerHTML = pays.operateurs.map(op=>`
+    <div class="method-btn ${op===selected?'active':''}" onclick="${onSelect}('${op}', this)">
+      <div class="method-logo">📱</div>
+      <div class="method-name">${op}</div>
+    </div>`).join('');
+}
+
+// ── DÉPÔT AUTOMATIQUE ──
+function initAutoPays(){
+  const paysAuto = PAYS.filter(p=>p.xofAuto);
+  remplirSelectPays('auto-pays', paysAuto);
+  document.getElementById('auto-pays').value = selectedAutoPays.code;
+  renderMethodButtons('auto-methods', selectedAutoPays, selectedAutoMethod, 'selectAutoMethod');
+}
+function onAutoPaysChange(){
+  const code = document.getElementById('auto-pays').value;
+  selectedAutoPays = PAYS.find(p=>p.code===code);
+  selectedAutoMethod = selectedAutoPays.operateurs[0];
+  renderMethodButtons('auto-methods', selectedAutoPays, selectedAutoMethod, 'selectAutoMethod');
+}
+function selectAutoMethod(op, btn){
+  selectedAutoMethod = op;
+  btn.parentElement.querySelectorAll('.method-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── DÉPÔT MANUEL ──
+function initManuelDepotPays(){
+  remplirSelectPays('manuel-depot-pays', PAYS);
+  document.getElementById('manuel-depot-pays').value = selectedManuelDepotPays.code;
+  renderMethodButtons('manuel-depot-methods', selectedManuelDepotPays, selectedManuelDepotMethod, 'selectManuelDepotMethod');
+}
+function onManuelDepotPaysChange(){
+  const code = document.getElementById('manuel-depot-pays').value;
+  selectedManuelDepotPays = PAYS.find(p=>p.code===code);
+  selectedManuelDepotMethod = selectedManuelDepotPays.operateurs[0];
+  renderMethodButtons('manuel-depot-methods', selectedManuelDepotPays, selectedManuelDepotMethod, 'selectManuelDepotMethod');
+}
+function selectManuelDepotMethod(op, btn){
+  selectedManuelDepotMethod = op;
+  btn.parentElement.querySelectorAll('.method-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── RETRAIT ──
+function initRetraitPays(){
+  remplirSelectPays('retrait-pays', PAYS);
+  document.getElementById('retrait-pays').value = selectedRetraitPays.code;
+  renderMethodButtons('retrait-methods', selectedRetraitPays, selectedRetraitMethod, 'selectRetraitMethod');
+}
+function onRetraitPaysChange(){
+  const code = document.getElementById('retrait-pays').value;
+  selectedRetraitPays = PAYS.find(p=>p.code===code);
+  selectedRetraitMethod = selectedRetraitPays.operateurs[0];
+  renderMethodButtons('retrait-methods', selectedRetraitPays, selectedRetraitMethod, 'selectRetraitMethod');
+}
+function selectRetraitMethod(op, btn){
+  selectedRetraitMethod = op;
+  btn.parentElement.querySelectorAll('.method-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── SOUS-ONGLETS DÉPÔT (Automatique / Manuel) ──
+function switchDepotMode(mode){
+  document.getElementById('subtab-auto').classList.toggle('active', mode==='auto');
+  document.getElementById('subtab-manuel').classList.toggle('active', mode==='manuel');
+  document.getElementById('depot-auto').style.display = mode==='auto' ? 'block' : 'none';
+  document.getElementById('depot-manuel').style.display = mode==='manuel' ? 'block' : 'none';
+}
 
 // ── INIT ──
 async function init(){
   if(!TOKEN){ location.href='/'; return; }
   try {
-    // User
     const r = await fetch('/api/me',{headers:{'Authorization':'Bearer '+TOKEN}});
     if(r.status===401){ localStorage.clear(); location.href='/'; return; }
     const u = await r.json();
@@ -269,7 +384,6 @@ async function init(){
     userID = u.id;
     document.getElementById('solde-val').textContent = userSolde.toLocaleString()+' XAF';
 
-    // Config
     const cfg = await fetch(SUPABASE_URL+'/rest/v1/config',{
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
@@ -277,26 +391,17 @@ async function init(){
     cfgData.forEach(c=>{
       if(c.cle==='min_depot') minDepot=parseInt(c.valeur);
       if(c.cle==='min_retrait') minRetrait=parseInt(c.valeur);
-      if(c.cle==='om_numero') numerosConfig['Orange Money']=c.valeur;
-      if(c.cle==='wave_numero') numerosConfig['Wave']=c.valeur;
-      if(c.cle==='mtn_numero') numerosConfig['MTN']=c.valeur;
-      if(c.cle==='moov_numero') numerosConfig['Moov']=c.valeur;
     });
-    document.getElementById('om-num').textContent = numerosConfig['Orange Money']||'—';
-    document.getElementById('wave-num').textContent = numerosConfig['Wave']||'—';
-    document.getElementById('mtn-num').textContent = numerosConfig['MTN']||'—';
-    document.getElementById('moov-num').textContent = numerosConfig['Moov']||'—';
-    document.getElementById('info-num-depot').textContent = 'Orange Money ('+( numerosConfig['Orange Money']||'—')+')';
 
-    // Vérifie si l'utilisateur a déjà investi dans un plan (condition de retrait)
+    initAutoPays();
+    initManuelDepotPays();
+    initRetraitPays();
+
     await checkInvestissement();
-
-    // Historique auto
     loadHistorique();
   } catch(e){ console.log(e); }
 }
 
-// ── VÉRIFICATION INVESTISSEMENT (condition pour retirer) ──
 async function checkInvestissement(){
   try {
     const r = await fetch(SUPABASE_URL+'/rest/v1/investments?user_id=eq.'+userID+'&select=id&limit=1',{
@@ -304,25 +409,16 @@ async function checkInvestissement(){
     });
     const data = await r.json();
     hasInvested = Array.isArray(data) && data.length > 0;
-  } catch(e) {
-    hasInvested = false;
-  }
+  } catch(e) { hasInvested = false; }
   updateRetraitLock();
 }
-
 function updateRetraitLock(){
   const box = document.getElementById('retrait-lock-box');
   const btn = document.getElementById('retrait-submit-btn');
-  if(!hasInvested){
-    box.style.display = 'block';
-    btn.disabled = true;
-  } else {
-    box.style.display = 'none';
-    btn.disabled = false;
-  }
+  if(!hasInvested){ box.style.display='block'; btn.disabled=true; }
+  else { box.style.display='none'; btn.disabled=false; }
 }
 
-// ── TABS ──
 function switchTab(tab){
   ['depot','retrait','historique'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
@@ -331,21 +427,59 @@ function switchTab(tab){
   if(tab==='historique') loadHistorique();
 }
 
-// ── MÉTHODE ──
-function selectMethod(btn, method, type){
-  const container = btn.closest('.methods');
-  container.querySelectorAll('.method-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  if(type==='depot'){
-    selectedDepotMethod = method;
-    const num = numerosConfig[method]||'—';
-    document.getElementById('info-num-depot').textContent = method+' ('+num+')';
-  } else {
-    selectedRetraitMethod = method;
+// ── DÉPÔT AUTOMATIQUE (LeekPay) ──
+// La confirmation reste validée manuellement par l'admin (voir note ci-dessous) :
+// LeekPay recommande de ne jamais créditer uniquement sur la base du navigateur.
+// Ici, on pré-remplit juste la référence de paiement automatiquement au lieu de la saisie manuelle.
+function lancerLeekPay(){
+  const montant = parseInt(document.getElementById('auto-montant').value);
+  if(!montant || montant < 500){
+    showModal('⚠️','Montant insuffisant','Minimum 500 XOF');
+    return;
+  }
+  if(typeof LeekPay === 'undefined'){
+    showModal('❌','Erreur',"Le module de paiement LeekPay n'a pas pu se charger. Réessayez.");
+    return;
+  }
+  LeekPay.checkout({
+    amount: montant,
+    currency: 'XOF',
+    apiKey: LEEKPAY_PUBLIC_KEY,
+    description: 'Dépôt AEROWATT - '+selectedAutoMethod+' - '+selectedAutoPays.nom,
+    onSuccess: async function(data){
+      await soumettreDepotAuto(data, montant);
+    },
+    onCancel: function(){
+      showModal('❌','Paiement annulé','Vous avez annulé le paiement.');
+    }
+  });
+}
+
+async function soumettreDepotAuto(leekpayData, montant){
+  try {
+    const r = await fetch('/api/depot',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        montant: leekpayData.amount || montant,
+        methode: selectedAutoMethod,
+        pays: selectedAutoPays.nom,
+        reference: leekpayData.payment_id || ''
+      })
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){
+      showModal('❌','Erreur', d.detail || 'Le paiement a réussi mais la soumission a échoué. Contactez le support avec votre référence : '+(leekpayData.payment_id||'—'));
+      return;
+    }
+    document.getElementById('auto-montant').value = '';
+    showModal('⏳','Paiement reçu !','Votre dépôt de '+montant.toLocaleString()+' XOF est en cours de validation par notre équipe.');
+  } catch(e){
+    showModal('❌','Erreur réseau',"Le paiement a réussi mais nous n'avons pas pu l'enregistrer. Contactez le support avec votre référence : "+(leekpayData.payment_id||'—'));
   }
 }
 
-// ── DÉPÔT ──
+// ── DÉPÔT MANUEL ──
 async function soumettreDépôt(){
   const montant = parseInt(document.getElementById('depot-montant').value);
   const tel = document.getElementById('depot-tel').value.trim();
@@ -353,25 +487,25 @@ async function soumettreDépôt(){
   if(!montant||montant<minDepot){ showModal('⚠️','Montant insuffisant','Minimum de dépôt : '+minDepot.toLocaleString()+' XAF'); return; }
   if(!tel){ showModal('⚠️','Champ manquant','Entrez votre numéro expéditeur'); return; }
   if(!ref){ showModal('⚠️','Champ manquant','Entrez la référence de transaction'); return; }
-  const btn = document.querySelector('#panel-depot .submit-btn');
+  const btn = document.querySelector('#depot-manuel .submit-btn');
   const btnHtml = btn.innerHTML;
   btn.textContent = 'Envoi...'; btn.disabled=true;
   try {
     const r = await fetch('/api/depot',{
       method:'POST',
       headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
-      body:JSON.stringify({montant,methode:selectedDepotMethod,telephone:tel,reference:ref})
+      body:JSON.stringify({montant,methode:selectedManuelDepotMethod,pays:selectedManuelDepotPays.nom,telephone:tel,reference:ref})
     });
     const d = await r.json().catch(()=>({}));
     if(!r.ok){
-      showModal('❌','Dépôt refusé', d.detail || d.error || 'Une erreur est survenue. Réessayez.');
+      showModal('❌','Dépôt refusé', d.detail || 'Une erreur est survenue. Réessayez.');
       btn.innerHTML = btnHtml; btn.disabled = false;
       return;
     }
     document.getElementById('depot-montant').value='';
     document.getElementById('depot-tel').value='';
     document.getElementById('depot-ref').value='';
-    showModal('⏳','Dépôt soumis !',`Votre dépôt de ${montant.toLocaleString()} XAF via ${selectedDepotMethod} est en cours de validation (5-30 min).`);
+    showModal('⏳','Dépôt soumis !',`Votre dépôt de ${montant.toLocaleString()} via ${selectedManuelDepotMethod} est en cours de validation (5-30 min).`);
   } catch(e){
     showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
   }
@@ -397,11 +531,11 @@ async function soumettreRetrait(){
     const r = await fetch('/api/retrait',{
       method:'POST',
       headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
-      body:JSON.stringify({montant,methode:selectedRetraitMethod,telephone:tel})
+      body:JSON.stringify({montant,methode:selectedRetraitMethod,pays:selectedRetraitPays.nom,telephone:tel})
     });
     const d = await r.json().catch(()=>({}));
     if(!r.ok){
-      showModal('❌','Retrait refusé', d.detail || d.error || 'Une erreur est survenue. Réessayez.');
+      showModal('❌','Retrait refusé', d.detail || 'Une erreur est survenue. Réessayez.');
       btn.innerHTML = btnHtml; btn.disabled = false;
       return;
     }
