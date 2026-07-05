@@ -169,6 +169,14 @@ async def demander_retrait(data: dict, user: dict = Depends(get_current_user)):
     if not invs.data:
         raise HTTPException(400, "Vous devez investir dans un plan avant de pouvoir retirer")
 
+    # Limite : 1 retrait par jour. Les retraits rejetés ne comptent pas (l'utilisateur peut réessayer).
+    debut_jour = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    retraits_du_jour = supabase.table("transactions").select("id").eq("user_id", user["id"]).eq(
+        "type", "retrait"
+    ).neq("statut", "rejete").gte("created_at", debut_jour.isoformat()).execute()
+    if retraits_du_jour.data:
+        raise HTTPException(400, "Vous avez déjà effectué un retrait aujourd'hui. Revenez demain.")
+
     try:
         tx = supabase.table("transactions").insert({
             "user_id": user["id"],
