@@ -147,6 +147,7 @@ async def demander_depot(data: dict, user_id: str = Depends(get_current_user_id)
         "methode": data.get("methode", ""),
         "numero_envoi": data.get("telephone", ""),
         "reference": data.get("reference", ""),
+        "pays": data.get("pays", ""),
         "statut": "en_attente"
     }).execute()
     return {"message": "Dépôt soumis", "id": tx.data[0]["id"]}
@@ -171,6 +172,7 @@ async def demander_retrait(data: dict, user: dict = Depends(get_current_user)):
         "montant": montant,
         "methode": data.get("methode", ""),
         "numero_envoi": data.get("telephone", ""),
+        "pays": data.get("pays", ""),
         "statut": "en_attente"
     }).execute()
     return {"message": "Retrait demandé", "id": tx.data[0]["id"]}
