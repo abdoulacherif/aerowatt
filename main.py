@@ -140,16 +140,19 @@ async def demander_depot(data: dict, user_id: str = Depends(get_current_user_id)
     montant = data.get("montant")
     if not montant or montant <= 0:
         raise HTTPException(400, "Montant invalide")
-    tx = supabase.table("transactions").insert({
-        "user_id": user_id,
-        "type": "depot",
-        "montant": montant,
-        "methode": data.get("methode", ""),
-        "numero_envoi": data.get("telephone", ""),
-        "reference": data.get("reference", ""),
-        "pays": data.get("pays", ""),
-        "statut": "en_attente"
-    }).execute()
+    try:
+        tx = supabase.table("transactions").insert({
+            "user_id": user_id,
+            "type": "depot",
+            "montant": montant,
+            "methode": data.get("methode", ""),
+            "numero_envoi": data.get("telephone", ""),
+            "reference": data.get("reference", ""),
+            "pays": data.get("pays", ""),
+            "statut": "en_attente"
+        }).execute()
+    except Exception as e:
+        raise HTTPException(400, f"Erreur base de données : {str(e)}")
     return {"message": "Dépôt soumis", "id": tx.data[0]["id"]}
 
 @app.post("/api/retrait")
@@ -166,15 +169,18 @@ async def demander_retrait(data: dict, user: dict = Depends(get_current_user)):
     if not invs.data:
         raise HTTPException(400, "Vous devez investir dans un plan avant de pouvoir retirer")
 
-    tx = supabase.table("transactions").insert({
-        "user_id": user["id"],
-        "type": "retrait",
-        "montant": montant,
-        "methode": data.get("methode", ""),
-        "numero_envoi": data.get("telephone", ""),
-        "pays": data.get("pays", ""),
-        "statut": "en_attente"
-    }).execute()
+    try:
+        tx = supabase.table("transactions").insert({
+            "user_id": user["id"],
+            "type": "retrait",
+            "montant": montant,
+            "methode": data.get("methode", ""),
+            "numero_envoi": data.get("telephone", ""),
+            "pays": data.get("pays", ""),
+            "statut": "en_attente"
+        }).execute()
+    except Exception as e:
+        raise HTTPException(400, f"Erreur base de données : {str(e)}")
     return {"message": "Retrait demandé", "id": tx.data[0]["id"]}
 
 @app.post("/api/investir")
