@@ -392,13 +392,16 @@ async function sb(table, method='GET', body=null, filter='') {
       'apikey': SUPABASE_KEY,
       'Authorization': 'Bearer ' + SUPABASE_KEY,
       'Content-Type': 'application/json',
-      'Prefer': method==='POST' ? 'return=representation' : ''
+      'Prefer': (method==='POST' || method==='PATCH') ? 'return=representation' : ''
     }
   };
   if(body) opts.body = JSON.stringify(body);
   const r = await fetch(url, opts);
   if(!r.ok) { const e = await r.text(); throw new Error(e); }
-  return method==='DELETE' ? null : r.json();
+  if(method==='DELETE') return null;
+  const text = await r.text();
+  if(!text) return null; // réponse vide (204 No Content) : ne pas planter au parsing JSON
+  try { return JSON.parse(text); } catch(e) { return null; }
 }
 
 // ── LOGIN ──
@@ -520,12 +523,12 @@ async function validerTx(txId, userId, montant, type) {
   try {
     await sb('transactions', 'PATCH', {statut:'approuve'}, `?id=eq.${txId}`);
     if(type==='depot') {
-      const user = await sb('users','GET',null,`?id=eq.${userId}&select=solde`);
+      const user = await sb('users','GET',null,`?id=eq.${userId}&select=solde`) || [];
       const newSolde = (user[0]?.solde||0) + montant;
       await sb('users','PATCH',{solde:newSolde},`?id=eq.${userId}`);
       await verserCommissionsParrainage(userId, montant);
     } else {
-      const user = await sb('users','GET',null,`?id=eq.${userId}&select=solde`);
+      const user = await sb('users','GET',null,`?id=eq.${userId}&select=solde`) || [];
       const newSolde = Math.max(0,(user[0]?.solde||0) - montant);
       await sb('users','PATCH',{solde:newSolde},`?id=eq.${userId}`);
     }
