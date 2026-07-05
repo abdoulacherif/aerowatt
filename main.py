@@ -75,6 +75,10 @@ async def admin():
 async def preuves():
     return html_page('templates/preuves.html')
 
+@app.get('/support')
+async def support():
+    return html_page('templates/support.html')
+
 
 # ── AUTHENTIFICATION API (centralisée, corrige les bugs de gestion d'erreurs) ──
 
