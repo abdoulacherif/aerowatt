@@ -158,6 +158,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
   <button class="admin-tab" onclick="switchAdminTab('actualites',this)">📰 Actualités</button>
   <button class="admin-tab" onclick="switchAdminTab('notifs',this)">🔔 Notifications</button>
   <button class="admin-tab" onclick="switchAdminTab('preuves',this)">📂 Preuves</button>
+  <button class="admin-tab" onclick="switchAdminTab('partenaires',this)">🤝 Partenaires</button>
 </div>
 
 <!-- DÉPÔTS -->
@@ -271,6 +272,22 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
     <input type="number" class="admin-input" id="cfg-loterie-jours" placeholder="30">
     <button class="btn-save btn-orange" onclick="sauvegarderLoterie()">Sauvegarder loterie</button>
   </div>
+  <div class="admin-section">
+    <div class="admin-section-title">🎡 Roue à Mise (Argent Gratuit)</div>
+    <div class="toggle-wrap">
+      <div><div class="toggle-label">Roue à mise active</div><div class="toggle-sub">Désactive complètement la section pour les utilisateurs</div></div>
+      <label class="toggle"><input type="checkbox" id="cfg-roue-mise-active" onchange="sauvegarderRoueMiseActive()"><span class="toggle-slider"></span></label>
+    </div>
+    <label class="admin-label">Mise minimum (XAF)</label>
+    <input type="number" class="admin-input" id="cfg-roue-mise-min" placeholder="50">
+    <label class="admin-label">Mise maximum (XAF)</label>
+    <input type="number" class="admin-input" id="cfg-roue-mise-max" placeholder="5000">
+    <label class="admin-label">Multiplicateur de gain</label>
+    <input type="number" step="0.1" class="admin-input" id="cfg-roue-mise-mult" placeholder="2">
+    <label class="admin-label">Probabilité de gain (%)</label>
+    <input type="number" step="0.1" class="admin-input" id="cfg-roue-mise-proba" placeholder="15">
+    <button class="btn-save btn-orange" onclick="sauvegarderRoueMiseParams()">Sauvegarder paramètres roue</button>
+  </div>
 </div>
 
 <!-- ACTUALITÉS -->
@@ -361,6 +378,14 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
   <div class="admin-section">
     <div class="admin-section-title">📋 Preuves existantes</div>
     <div id="preuves-list"><div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div></div>
+  </div>
+</div>
+
+<!-- PARTENAIRES -->
+<div class="admin-panel" id="panel-partenaires">
+  <div class="admin-section">
+    <div class="admin-section-title">🤝 Candidatures partenaires</div>
+    <div id="partenaires-list"><div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div></div>
   </div>
 </div>
 
@@ -455,7 +480,7 @@ function showToast(msg, error=false) {
 
 // ── LOAD ALL ──
 async function loadAll() {
-  await Promise.all([loadStats(), loadDepots(), loadRetraits(), loadUsers(), loadPlans(), loadConfig(), loadActu(), loadPreuves()]);
+  await Promise.all([loadStats(), loadDepots(), loadRetraits(), loadUsers(), loadPlans(), loadConfig(), loadActu(), loadPreuves(), loadPartenaires()]);
 }
 
 // ── STATS ──
@@ -758,6 +783,11 @@ async function loadConfig() {
     document.getElementById('cfg-loterie-tours').value = map.loterie_tours||'';
     document.getElementById('cfg-loterie-min').value = map.loterie_min_retrait||'';
     document.getElementById('cfg-loterie-jours').value = map.loterie_jours_contrat||'';
+    document.getElementById('cfg-roue-mise-active').checked = map.roue_mise_active==='true';
+    document.getElementById('cfg-roue-mise-min').value = map.roue_mise_min||'';
+    document.getElementById('cfg-roue-mise-max').value = map.roue_mise_max||'';
+    document.getElementById('cfg-roue-mise-mult').value = map.roue_mise_multiplicateur||'';
+    document.getElementById('cfg-roue-mise-proba').value = map.roue_mise_probabilite_gain||'';
   } catch(e){}
 }
 
@@ -794,6 +824,53 @@ async function sauvegarderLoterie() {
     upsertCfg('loterie_jours_contrat', document.getElementById('cfg-loterie-jours').value),
   ]);
   showToast('✅ Loterie sauvegardée');
+}
+
+async function sauvegarderRoueMiseActive() {
+  const actif = document.getElementById('cfg-roue-mise-active').checked;
+  await upsertCfg('roue_mise_active', actif ? 'true' : 'false');
+  showToast(actif ? '✅ Roue à mise activée' : '🚫 Roue à mise désactivée');
+}
+
+async function sauvegarderRoueMiseParams() {
+  await Promise.all([
+    upsertCfg('roue_mise_min', document.getElementById('cfg-roue-mise-min').value),
+    upsertCfg('roue_mise_max', document.getElementById('cfg-roue-mise-max').value),
+    upsertCfg('roue_mise_multiplicateur', document.getElementById('cfg-roue-mise-mult').value),
+    upsertCfg('roue_mise_probabilite_gain', document.getElementById('cfg-roue-mise-proba').value),
+  ]);
+  showToast('✅ Paramètres roue sauvegardés');
+}
+
+// ── PARTENAIRES ──
+async function loadPartenaires() {
+  try {
+    const candidatures = await sb('partenaires','GET',null,'?order=created_at.desc');
+    const c = document.getElementById('partenaires-list');
+    if(!candidatures.length){ c.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px">Aucune candidature</div>'; return; }
+    c.innerHTML = candidatures.map(p=>`
+    <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.07)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:800">${p.nom||'—'}</div>
+        <span class="status-badge ${p.statut==='approuve'?'s-ok':p.statut==='rejete'?'s-ko':'s-wait'}">${p.statut}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${p.telephone||'—'} · ${p.ville||'—'}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:10px">${new Date(p.created_at).toLocaleString('fr')}</div>
+      ${p.piece_identite_url?`<img src="${p.piece_identite_url}" style="width:100%;max-height:220px;object-fit:contain;border-radius:8px;margin-bottom:10px;background:#000">`:''}
+      ${p.statut==='en_attente'?`<div style="display:flex;gap:8px">
+        <button class="btn-sm btn-green" onclick="traiterPartenaire('${p.id}','approuve')">✅ Approuver</button>
+        <button class="btn-sm btn-red" onclick="traiterPartenaire('${p.id}','rejete')">❌ Rejeter</button>
+      </div>`:''}
+    </div>`).join('');
+  } catch(e) { showToast('Erreur chargement partenaires', true); }
+}
+
+async function traiterPartenaire(id, statut) {
+  try {
+    await sb('partenaires','PATCH',{statut},`?id=eq.${id}`);
+    showToast(statut==='approuve'?'✅ Candidature approuvée':'❌ Candidature rejetée');
+    loadPartenaires();
+  } catch(e) { showToast('Erreur: '+e.message, true); }
 }
 
 // ── ACTUALITÉS ──
