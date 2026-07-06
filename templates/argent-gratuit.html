@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AEROWATT — Argent Gratuit</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#0066FF;--cyan:#00E5FF;--orange:#FF6B00;--orange2:#FF9A3C;--black:#080E1A;--dark:#0D1827;--bg:#F0F6FF;--muted:#7A9BB5;--border:#E2EBF8;--green:#00B86B;--red:#FF3B30}
+body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:40px}
+.top-bar{background:linear-gradient(135deg,var(--dark),#0A1E3A);padding:16px 18px;display:flex;align-items:center;gap:12px}
+.top-title{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:#fff;letter-spacing:2px;flex:1;text-align:center}
+.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.subtabs{display:flex;gap:8px;margin:16px}
+.subtab{flex:1;padding:12px;text-align:center;font-size:13px;font-weight:800;border-radius:12px;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted)}
+.subtab.active{border-color:var(--blue);background:rgba(0,102,255,0.06);color:var(--blue)}
+.panel{display:none;padding:0 16px}
+.panel.active{display:block}
+.card{background:#fff;border-radius:18px;padding:20px;border:1px solid var(--border);margin-bottom:16px}
+.card-title{font-size:14px;font-weight:800;color:var(--black);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block}
+.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--black);outline:none}
+.form-input:focus{border-color:var(--cyan)}
+.upload-btn{width:100%;padding:14px;background:var(--bg);border:2px dashed var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:6px}
+.preview-wrap{display:none;margin-bottom:12px}
+.preview-wrap img{width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:1px solid var(--border)}
+.submit-btn{width:100%;padding:15px;border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px}
+.btn-blue{background:linear-gradient(135deg,var(--blue),var(--cyan))}
+.info-box{margin-top:14px;background:var(--bg);border-radius:12px;padding:12px 14px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6}
+
+.roue-solde{text-align:center;font-size:12px;color:var(--muted);margin-bottom:4px}
+.roue-solde-val{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--blue)}
+.wheel-wrap{position:relative;width:230px;height:230px;margin:16px auto}
+.wheel-pointer{position:absolute;top:-12px;left:50%;transform:translateX(-50%);z-index:2}
+.wheel-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:#fff;border-radius:50%;border:3px solid var(--orange);display:flex;align-items:center;justify-content:center;z-index:2}
+.mise-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.mise-btn{padding:11px 4px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--black);cursor:pointer}
+.mise-btn.active{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border-color:transparent}
+.spin-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--orange),var(--orange2));border:none;border-radius:14px;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px}
+.spin-btn:disabled{background:#ddd;color:#aaa;cursor:not-allowed}
+.result-box{display:none;margin-top:14px;padding:16px;border-radius:14px;text-align:center}
+.result-box.win{display:block;background:linear-gradient(135deg,#E8FFF4,#D0FDE8);border:1.5px solid rgba(0,184,107,0.3)}
+.result-box.lose{display:block;background:linear-gradient(135deg,#FFF0F0,#FFE0E0);border:1.5px solid rgba(255,59,48,0.25)}
+.result-big{font-family:'Orbitron',monospace;font-size:22px;font-weight:900}
+.disabled-box{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <button class="back-btn" onclick="location.href='/dashboard'"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+  <div class="top-title">ARGENT GRATUIT</div>
+  <div style="width:34px"></div>
+</div>
+
+<div class="subtabs">
+  <div class="subtab active" id="subtab-partenaire" onclick="switchMode('partenaire')">🤝 Devenir Partenaire</div>
+  <div class="subtab" id="subtab-roue" onclick="switchMode('roue')">🎡 Roue à Mise</div>
+</div>
+
+<!-- DEVENIR PARTENAIRE -->
+<div class="panel active" id="panel-partenaire">
+  <div class="card">
+    <div class="card-title">🤝 Devenir Partenaire AEROWATT</div>
+    <div class="form-group">
+      <label class="form-label">Nom complet</label>
+      <input type="text" class="form-input" id="p-nom" placeholder="Votre nom complet">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Téléphone</label>
+      <input type="tel" class="form-input" id="p-tel" placeholder="Votre numéro de téléphone">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ville</label>
+      <input type="text" class="form-input" id="p-ville" placeholder="Votre ville de résidence">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pièce d'identité (carte ou passeport)</label>
+      <input type="file" id="p-file" accept="image/*" style="display:none" onchange="previewPiece(event)">
+      <div class="preview-wrap" id="p-preview-wrap"><img id="p-preview-img"></div>
+      <button class="upload-btn" id="p-upload-btn" onclick="document.getElementById('p-file').click()">📎 Choisir un document</button>
+    </div>
+    <button class="submit-btn btn-blue" onclick="soumettrePartenaire()">Soumettre ma candidature</button>
+    <div class="info-box">Votre candidature sera examinée par notre équipe. Vous serez contacté(e) une fois votre dossier validé.</div>
+  </div>
+</div>
+
+<!-- ROUE À MISE -->
+<div class="panel" id="panel-roue">
+  <div class="card" id="roue-card">
+    <div class="card-title">🎡 Roue à Mise</div>
+    <div class="roue-solde">Solde disponible</div>
+    <div class="roue-solde-val" id="roue-solde" style="text-align:center;margin-bottom:14px">— XAF</div>
+
+    <div class="wheel-wrap">
+      <div class="wheel-pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2L4 20h16L12 2z"/></svg></div>
+      <canvas id="wheel" width="230" height="230"></canvas>
+      <div class="wheel-center">🎡</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Choisissez votre mise</label>
+      <div class="mise-grid" id="mise-grid"></div>
+      <input type="number" class="form-input" id="mise-custom" placeholder="Ou entrez un montant personnalisé">
+    </div>
+
+    <button class="spin-btn" id="spin-btn" onclick="jouerRoue()">🎯 Tourner la roue</button>
+    <div class="result-box" id="result-box">
+      <div class="result-big" id="result-big"></div>
+      <div id="result-txt" style="font-size:13px;color:var(--muted);margin-top:4px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token = localStorage.getItem('token');
+let userSolde = 0;
+let miseChoisie = 0;
+let miseMin = 50;
+let miseMax = 5000;
+let roueActive = true;
+let spinning = false;
+
+async function init(){
+  if(!token){ location.href='/'; return; }
+  try {
+    const r = await fetch('/api/me', {headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok){ location.href='/'; return; }
+    const u = await r.json();
+    userSolde = u.solde || 0;
+    document.getElementById('roue-solde').textContent = userSolde.toLocaleString()+' XAF';
+
+    const rc = await fetch('/api/roue-mise/config', {headers:{'Authorization':'Bearer '+token}});
+    const cfg = await rc.json();
+    roueActive = cfg.active;
+    miseMin = cfg.mise_min;
+    miseMax = cfg.mise_max;
+
+    if(!roueActive){
+      document.getElementById('roue-card').innerHTML = '<div class="disabled-box">🚧 La roue à mise est temporairement indisponible.<br>Revenez bientôt !</div>';
+    } else {
+      renderMiseOptions();
+      drawWheel();
+    }
+  } catch(e) { console.log(e); }
+}
+
+function switchMode(mode){
+  document.getElementById('subtab-partenaire').classList.toggle('active', mode==='partenaire');
+  document.getElementById('subtab-roue').classList.toggle('active', mode==='roue');
+  document.getElementById('panel-partenaire').classList.toggle('active', mode==='partenaire');
+  document.getElementById('panel-roue').classList.toggle('active', mode==='roue');
+}
+
+// ── DEVENIR PARTENAIRE ──
+let pieceIdentiteUrl = null;
+function previewPiece(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    pieceIdentiteUrl = e.target.result;
+    document.getElementById('p-preview-img').src = pieceIdentiteUrl;
+    document.getElementById('p-preview-wrap').style.display = 'block';
+    document.getElementById('p-upload-btn').textContent = '✅ Document sélectionné — changer';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function soumettrePartenaire(){
+  const nom = document.getElementById('p-nom').value.trim();
+  const tel = document.getElementById('p-tel').value.trim();
+  const ville = document.getElementById('p-ville').value.trim();
+  if(!nom || !tel){ showToast('Nom et téléphone requis', true); return; }
+  if(!pieceIdentiteUrl){ showToast("Veuillez joindre une pièce d'identité", true); return; }
+  try {
+    const r = await fetch('/api/partenaire/soumettre', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({nom, telephone: tel, ville, piece_identite_url: pieceIdentiteUrl})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ showToast(d.detail || 'Erreur', true); return; }
+    showToast('✅ Candidature soumise avec succès !');
+    document.getElementById('p-nom').value = '';
+    document.getElementById('p-tel').value = '';
+    document.getElementById('p-ville').value = '';
+    document.getElementById('p-preview-wrap').style.display = 'none';
+    document.getElementById('p-upload-btn').textContent = '📎 Choisir un document';
+    pieceIdentiteUrl = null;
+  } catch(e) { showToast('Erreur réseau', true); }
+}
+
+// ── ROUE À MISE ──
+function renderMiseOptions(){
+  const options = [miseMin, miseMin*2, miseMin*4, miseMin*10].filter(v=>v<=miseMax);
+  const grid = document.getElementById('mise-grid');
+  grid.innerHTML = options.map((v,i)=>`<button class="mise-btn${i===0?' active':''}" onclick="choisirMise(${v},this)">${v.toLocaleString()}</button>`).join('');
+  miseChoisie = options[0];
+}
+function choisirMise(v, btn){
+  miseChoisie = v;
+  document.getElementById('mise-custom').value = '';
+  document.querySelectorAll('.mise-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id === 'mise-custom'){
+    const v = parseInt(e.target.value);
+    if(v) { miseChoisie = v; document.querySelectorAll('.mise-btn').forEach(b=>b.classList.remove('active')); }
+  }
+});
+
+const segments = 8;
+const arc = 2*Math.PI/segments;
+const colors = ['#FF6B00','#0D1827','#0066FF','#00B4CC','#FF9A3C','#0D1827','#00B86B','#0066FF'];
+let wheelAngle = 0;
+const canvas = document.getElementById('wheel');
+function drawWheel(a=0){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,230,230);
+  const cx=115, cy=115, r=112;
+  for(let i=0;i<segments;i++){
+    const s=a+i*arc, e=s+arc;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,s,e); ctx.closePath();
+    ctx.fillStyle = colors[i]; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=3; ctx.stroke();
+}
+drawWheel(0);
+
+function animateSpin(callback){
+  const dur = 3500;
+  const start = performance.now();
+  const startAngle = wheelAngle;
+  const totalRot = 2*Math.PI*6 + Math.random()*2*Math.PI;
+  function step(now){
+    const p = Math.min((now-start)/dur, 1);
+    const eased = 1 - Math.pow(1-p, 4);
+    wheelAngle = startAngle + totalRot*eased;
+    drawWheel(wheelAngle);
+    if(p<1){ requestAnimationFrame(step); } else { callback(); }
+  }
+  requestAnimationFrame(step);
+}
+
+async function jouerRoue(){
+  if(spinning) return;
+  if(!miseChoisie || miseChoisie < miseMin){ showToast('Mise minimum : '+miseMin+' XAF', true); return; }
+  if(miseChoisie > miseMax){ showToast('Mise maximum : '+miseMax+' XAF', true); return; }
+  if(miseChoisie > userSolde){ showToast('Solde insuffisant', true); return; }
+
+  spinning = true;
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = true;
+  btn.textContent = 'Traitement...';
+  document.getElementById('result-box').className = 'result-box';
+
+  try {
+    const r = await fetch('/api/roue-mise/jouer', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({mise: miseChoisie})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){
+      showToast(d.detail || 'Erreur', true);
+      btn.disabled = false; btn.textContent = '🎯 Tourner la roue'; spinning = false;
+      return;
+    }
+    animateSpin(()=>{
+      userSolde = d.nouveau_solde;
+      document.getElementById('roue-solde').textContent = userSolde.toLocaleString()+' XAF';
+      const box = document.getElementById('result-box');
+      if(d.gagne){
+        box.className = 'result-box win';
+        document.getElementById('result-big').textContent = '🎉 Gagné !';
+        document.getElementById('result-big').style.color = 'var(--green)';
+        document.getElementById('result-txt').textContent = 'Nouveau solde : '+userSolde.toLocaleString()+' XAF';
+      } else {
+        box.className = 'result-box lose';
+        document.getElementById('result-big').textContent = 'Perdu';
+        document.getElementById('result-big').style.color = 'var(--red)';
+        document.getElementById('result-txt').textContent = 'Retentez votre chance !';
+      }
+      btn.disabled = false; btn.textContent = '🎯 Tourner la roue'; spinning = false;
+    });
+  } catch(e) {
+    showToast('Erreur réseau', true);
+    btn.disabled = false; btn.textContent = '🎯 Tourner la roue'; spinning = false;
+  }
+}
+
+function showToast(msg, error=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = error ? '#FF3B30' : '#0D1827';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+init();
+</script>
+</body>
+</html>
