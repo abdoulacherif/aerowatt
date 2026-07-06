@@ -103,9 +103,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     <div class="menu-label">Dépôt & Retrait</div>
     <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="#7A9BB5"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
   </div>
-  <div class="menu-item" onclick="window.open('https://t.me/+_FHah9icGJ9kZmM0')">
+  <div class="menu-item" onclick="location.href='/support'">
     <div class="menu-icon mi-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0066FF"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></div>
-    <div class="menu-label">Canal Telegram</div>
+    <div class="menu-label">Contact & Support</div>
     <svg class="menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="#7A9BB5"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
   </div>
 </div>
@@ -148,9 +148,15 @@ async function init(){
       document.getElementById('user-since').textContent = 'Membre depuis '+mois[d.getMonth()]+' '+d.getFullYear();
     }
 
-    // Gains totaux et filleuls : à brancher selon ton schéma (voir note ci-dessous)
-    // document.getElementById('stat-gains').textContent = ...
-    // document.getElementById('stat-filleuls').textContent = ...
+    // Gains totaux et filleuls, via l'endpoint /api/equipe (parrainage réel)
+    try {
+      const re = await fetch('/api/equipe', {headers:{'Authorization':'Bearer '+token}});
+      if(re.ok){
+        const eq = await re.json();
+        document.getElementById('stat-gains').textContent = (eq.gains?.total||0).toLocaleString();
+        document.getElementById('stat-filleuls').textContent = (eq.filleuls||[]).length;
+      }
+    } catch(e) { console.log('Erreur chargement équipe:', e); }
   } catch(e) {
     console.log('Erreur chargement profil:', e);
   }
