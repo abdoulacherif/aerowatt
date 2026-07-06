@@ -195,6 +195,7 @@ function buildPhone(panelSelector, telInputId){
 }
 
 async function doLogin(){
+  const dialSelectionne = document.querySelector('#panel-login .csel').value;
   const tel = buildPhone('#panel-login','ltel');
   const pwd = document.getElementById('lpass').value;
   if(!document.getElementById('ltel').value.trim() || !pwd){alert('Remplissez tous les champs');return;}
@@ -206,6 +207,7 @@ async function doLogin(){
     const d=await r.json().catch(()=>({}));
     if(r.ok){
       localStorage.setItem('token',d.token);
+      localStorage.setItem('user_country_dial', dialSelectionne); // mémorise le pays pour la prochaine connexion
       if(d.user){
         localStorage.setItem('user_nom',d.user.nom||'');
         localStorage.setItem('user_solde',d.user.solde||0);
@@ -227,6 +229,7 @@ async function doRegister(){
   const p2 = document.getElementById('rp2').value;
   if(!document.getElementById('rname').value.trim() || !document.getElementById('rtel').value.trim() || !p1){alert('Remplissez tous les champs');return;}
   if(p1 !== p2){alert('Les mots de passe ne correspondent pas');return;}
+  const dialSelectionne = document.querySelector('#panel-register .csel').value;
   const tel = buildPhone('#panel-register','rtel');
   const btn=document.querySelector('#panel-register .btn-main');
   const original = btn.innerHTML;
@@ -239,6 +242,7 @@ async function doRegister(){
       localStorage.setItem('token',d.token);
       localStorage.setItem('user_nom',document.getElementById('rname').value||'');
       localStorage.setItem('user_tel',tel||'');
+      localStorage.setItem('user_country_dial', dialSelectionne); // mémorise le pays pour la prochaine connexion
       localStorage.setItem('roue_done','');
       window.location.href='/dashboard';
       return;
@@ -268,6 +272,16 @@ setInterval(()=>{
   document.getElementById('nt').textContent='il y a '+n.t;
   el.style.animation='none';void el.offsetWidth;el.style.animation='sIn .4s ease';
 },4000);
+
+// Pré-sélectionne automatiquement le pays utilisé lors de la dernière connexion/inscription sur cet appareil
+(function(){
+  const dialMemorise = localStorage.getItem('user_country_dial');
+  if(dialMemorise){
+    document.querySelectorAll('.csel').forEach(sel=>{
+      if([...sel.options].some(o=>o.value===dialMemorise)) sel.value = dialMemorise;
+    });
+  }
+})();
 </script>
 </body>
 </html>
