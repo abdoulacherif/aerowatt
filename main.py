@@ -428,3 +428,99 @@ async def get_equipe(user: dict = Depends(get_current_user)):
         "gains": {"n1": gains_n1, "n2": gains_n2, "n3": gains_n3, "total": gains_n1 + gains_n2 + gains_n3},
         "filleuls": filleuls
     }
+
+
+# ── PAGE ARGENT GRATUIT ──
+
+@app.get("/argent-gratuit")
+async def argent_gratuit():
+    return html_page("templates/argent-gratuit.html")
+
+
+# ── ROUE À MISE (tirage sécurisé côté serveur — jamais confié au navigateur) ──
+
+import random
+
+@app.get("/api/roue-mise/config")
+async def roue_mise_config():
+    cfg = supabase.table("config").select("*").execute()
+    cfg_map = {row["cle"]: row["valeur"] for row in (cfg.data or [])}
+    return {
+        "active": cfg_map.get("roue_mise_active", "true") == "true",
+        "mise_min": int(cfg_map.get("roue_mise_min", 50)),
+        "mise_max": int(cfg_map.get("roue_mise_max", 5000))
+    }
+
+@app.post("/api/roue-mise/jouer")
+async def roue_mise_jouer(data: dict, user: dict = Depends(get_current_user)):
+    cfg = supabase.table("config").select("*").execute()
+    cfg_map = {row["cle"]: row["valeur"] for row in (cfg.data or [])}
+
+    if cfg_map.get("roue_mise_active", "true") != "true":
+        raise HTTPException(400, "La roue à mise est actuellement indisponible.")
+
+    mise_min = int(cfg_map.get("roue_mise_min", 50))
+    mise_max = int(cfg_map.get("roue_mise_max", 5000))
+    multiplicateur = float(cfg_map.get("roue_mise_multiplicateur", 2))
+    probabilite_gain = float(cfg_map.get("roue_mise_probabilite_gain", 15))
+
+    mise = data.get("mise", 0)
+    if not mise or mise < mise_min:
+        raise HTTPException(400, f"Mise minimum : {mise_min} XAF")
+    if mise > mise_max:
+        raise HTTPException(400, f"Mise maximum : {mise_max} XAF")
+
+    solde = user["solde"]
+    if mise > solde:
+        raise HTTPException(400, "Solde insuffisant")
+
+    # Tirage aléatoire réel, jamais exposé ni influençable côté client.
+    gagne = random.uniform(0, 100) < probabilite_gain
+
+    if gagne:
+        gain_total = round(mise * multiplicateur)
+        nouveau_solde = solde - mise + gain_total
+        montant_transaction = gain_total - mise  # profit net affiché dans l'historique
+        type_transaction = "roue_mise_gain"
+    else:
+        nouveau_solde = solde - mise
+        montant_transaction = mise
+        type_transaction = "roue_mise_perte"
+
+    supabase.table("users").update({"solde": nouveau_solde}).eq("id", user["id"]).execute()
+    supabase.table("transactions").insert({
+        "user_id": user["id"],
+        "type": type_transaction,
+        "montant": montant_transaction,
+        "statut": "approuve"
+    }).execute()
+
+    return {"gagne": gagne, "nouveau_solde": nouveau_solde}
+
+
+# ── DEVENIR PARTENAIRE ──
+
+@app.post("/api/partenaire/soumettre")
+async def partenaire_soumettre(data: dict, user: dict = Depends(get_current_user)):
+    nom = (data.get("nom") or "").strip()
+    telephone = (data.get("telephone") or "").strip()
+    ville = (data.get("ville") or "").strip()
+    piece_identite_url = data.get("piece_identite_url") or ""
+
+    if not nom or not telephone or not piece_identite_url:
+        raise HTTPException(400, "Nom, téléphone et pièce d'identité sont requis")
+
+    existing = supabase.table("partenaires").select("id").eq("user_id", user["id"]).eq("statut", "en_attente").execute()
+    if existing.data:
+        raise HTTPException(400, "Vous avez déjà une candidature en cours de traitement")
+
+    supabase.table("partenaires").insert({
+        "user_id": user["id"],
+        "nom": nom,
+        "telephone": telephone,
+        "ville": ville,
+        "piece_identite_url": piece_identite_url,
+        "statut": "en_attente"
+    }).execute()
+
+    return {"message": "Candidature soumise avec succès"}
