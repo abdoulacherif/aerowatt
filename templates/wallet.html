@@ -540,10 +540,9 @@ async function soumettreRetrait(){
       headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
       body:JSON.stringify({montant,methode:selectedRetraitMethod,pays:selectedRetraitPays.nom,telephone:tel})
     });
-    const rawText = await r.clone().text().catch(()=>'(illisible)');
     const d = await r.json().catch(()=>({}));
     if(!r.ok){
-      showModal('❌','DEBUG Retrait refusé', 'HTTP '+r.status+' : '+rawText);
+      showModal('❌','Retrait refusé', d.detail || 'Une erreur est survenue. Réessayez.');
       btn.innerHTML = btnHtml; btn.disabled = false;
       return;
     }
