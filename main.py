@@ -156,7 +156,8 @@ async def demander_depot(data: dict, user_id: str = Depends(get_current_user_id)
             "statut": "en_attente"
         }).execute()
     except Exception as e:
-        raise HTTPException(400, f"Erreur base de données : {str(e)}")
+        print(f"[ERREUR /api/depot] {e}")  # visible dans les logs Vercel pour diagnostic
+        raise HTTPException(500, "Une erreur est survenue. Réessayez plus tard.")
     return {"message": "Dépôt soumis", "id": tx.data[0]["id"]}
 
 @app.post("/api/retrait")
@@ -198,7 +199,8 @@ async def demander_retrait(data: dict, user: dict = Depends(get_current_user)):
             "statut": "en_attente"
         }).execute()
     except Exception as e:
-        raise HTTPException(400, f"Erreur base de données : {str(e)}")
+        print(f"[ERREUR /api/retrait] {e}")  # visible dans les logs Vercel pour diagnostic
+        raise HTTPException(500, "Une erreur est survenue. Réessayez plus tard.")
     return {"message": "Retrait demandé", "id": tx.data[0]["id"]}
 
 @app.post("/api/investir")
