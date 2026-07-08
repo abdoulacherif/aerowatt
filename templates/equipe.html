@@ -238,8 +238,9 @@ function filterLevel(level,btn){
 
 function copyCode(){navigator.clipboard.writeText(MON_CODE).catch(()=>{});showToast('✅ Code copié : '+MON_CODE);}
 function shareCode(){
-  const msg=`🌬️ Rejoins AEROWATT !\nCode : ${MON_CODE}\n👉 https://aerowatt.vercel.app`;
-  if(navigator.share){navigator.share({title:'AEROWATT',text:msg});}
+  const lien = `https://aerowatt.vercel.app/?ref=${MON_CODE}`;
+  const msg=`🌬️ Rejoins AEROWATT !\nCode : ${MON_CODE}\n👉 ${lien}`;
+  if(navigator.share){navigator.share({title:'AEROWATT',text:msg,url:lien});}
   else{navigator.clipboard.writeText(msg).catch(()=>{});showToast('✅ Lien copié !');}
 }
 
