@@ -282,6 +282,17 @@ setInterval(()=>{
     });
   }
 })();
+
+// Récupère le code de parrainage depuis le lien partagé (ex: aerowatt.vercel.app/?ref=123456)
+// et bascule automatiquement sur l'onglet inscription avec le code déjà rempli.
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if(ref){
+    document.getElementById('rref').value = ref;
+    sw('register');
+  }
+})();
 </script>
 </body>
 </html>
