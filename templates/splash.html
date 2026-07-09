@@ -127,7 +127,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <input class="ifield" type="password" placeholder="Mot de passe" id="lpass">
       <button class="eye" onclick="tog('lpass',this)">👁</button>
     </div>
-    <div class="forgot"><a href="#">Mot de passe oublié ?</a></div>
+    <div class="forgot"><a href="#" onclick="event.preventDefault();ouvrirMotDePasseOublie()">Mot de passe oublié ?</a></div>
   </div>
 </div>
 <div class="btn-wrap">
@@ -162,6 +162,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     <div class="ir"><span class="ii">🔒</span><input class="ifield" type="password" placeholder="Créer un mot de passe" id="rp1"><button class="eye" onclick="tog('rp1',this)">👁</button></div>
     <div class="ir"><span class="ii">🔒</span><input class="ifield" type="password" placeholder="Confirmer le mot de passe" id="rp2"><button class="eye" onclick="tog('rp2',this)">👁</button></div>
     <div class="ir ref-row"><span class="ii">🎁</span><input class="ifield" type="text" placeholder="Code de parrainage (optionnel)" id="rref"><span class="rbadge">+20%</span></div>
+    <div class="ir">
+      <span class="ii">🛡️</span>
+      <select class="ifield" id="rquestion" style="padding:14px 0;cursor:pointer">
+        <option value="Quel est le nom de votre premier animal ?">Nom de votre premier animal</option>
+        <option value="Quelle est votre ville de naissance ?">Votre ville de naissance</option>
+        <option value="Quel est le prénom de votre mère ?">Prénom de votre mère</option>
+        <option value="Quel est le nom de votre école primaire ?">Nom de votre école primaire</option>
+      </select>
+    </div>
+    <div class="ir"><span class="ii">🔑</span><input class="ifield" type="text" placeholder="Réponse (pour récupérer votre compte)" id="rreponse"></div>
     <div class="terms"><input type="checkbox" id="terms"><span>J'accepte les <a href="#">conditions</a> et la <a href="#">politique de confidentialité</a></span></div>
   </div>
 </div>
@@ -177,6 +187,61 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </div>
 <div class="trust"><div class="tdot"></div>SSL SÉCURISÉ · PAIEMENTS VÉRIFIÉS · SUPPORT 24H<div class="tdot"></div></div>
 <a href="/support" class="support">🎧</a>
+
+<!-- MOT DE PASSE OUBLIÉ -->
+<div id="forgot-overlay" style="display:none;position:fixed;inset:0;background:rgba(8,14,26,0.7);z-index:400;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 36px;width:100%;max-width:430px">
+    <div style="display:flex;align-items:center;margin-bottom:16px">
+      <div class="slabel" style="margin-bottom:0;flex:1">Mot de passe oublié</div>
+      <button onclick="fermerMotDePasseOublie()" style="background:var(--bg);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px">✕</button>
+    </div>
+
+    <!-- Étape 1 : numéro -->
+    <div id="forgot-step1">
+      <div class="fg">
+        <div class="ir">
+          <span class="ii">📱</span>
+          <select class="csel" id="forgot-dial">
+            <option value="+235">🇹🇩 +235</option>
+            <option value="+237">🇨🇲 +237</option>
+            <option value="+228">🇹🇬 +228</option>
+            <option value="+229">🇧🇯 +229</option>
+            <option value="+223">🇲🇱 +223</option>
+            <option value="+226">🇧🇫 +226</option>
+            <option value="+225">🇨🇮 +225</option>
+            <option value="+243">🇨🇩 +243</option>
+            <option value="+241">🇬🇦 +241</option>
+            <option value="+227">🇳🇪 +227</option>
+            <option value="+234">🇳🇬 +234</option>
+            <option value="+221">🇸🇳 +221</option>
+          </select>
+          <input class="ifield" type="tel" placeholder="Votre numéro de téléphone" id="forgot-tel">
+        </div>
+      </div>
+      <button class="btn-main btn-login" style="margin-top:14px" onclick="etapeObtenirQuestion()">Continuer</button>
+    </div>
+
+    <!-- Étape 2 : question -->
+    <div id="forgot-step2" style="display:none">
+      <div id="forgot-question-text" style="font-size:14px;font-weight:700;color:var(--black);margin-bottom:12px"></div>
+      <div class="fg">
+        <div class="ir"><span class="ii">🔑</span><input class="ifield" type="text" placeholder="Votre réponse" id="forgot-reponse"></div>
+      </div>
+      <button class="btn-main btn-login" style="margin-top:14px" onclick="etapeVerifierReponse()">Valider</button>
+    </div>
+
+    <!-- Étape 3 : nouveau mot de passe -->
+    <div id="forgot-step3" style="display:none">
+      <div class="fg">
+        <div class="ir"><span class="ii">🔒</span><input class="ifield" type="password" placeholder="Nouveau mot de passe" id="forgot-p1"></div>
+        <div class="ir"><span class="ii">🔒</span><input class="ifield" type="password" placeholder="Confirmer le mot de passe" id="forgot-p2"></div>
+      </div>
+      <button class="btn-main btn-login" style="margin-top:14px" onclick="etapeReinitialiser()">Réinitialiser mon mot de passe</button>
+    </div>
+
+    <div id="forgot-error" style="color:#FF3B30;font-size:12px;margin-top:10px;text-align:center;display:none"></div>
+  </div>
+</div>
 <script>
 function sw(t){
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
@@ -227,14 +292,23 @@ async function doRegister(){
   if(!document.getElementById('terms').checked){alert('Acceptez les conditions');return;}
   const p1 = document.getElementById('rp1').value;
   const p2 = document.getElementById('rp2').value;
+  const reponseSecu = document.getElementById('rreponse').value.trim();
   if(!document.getElementById('rname').value.trim() || !document.getElementById('rtel').value.trim() || !p1){alert('Remplissez tous les champs');return;}
   if(p1 !== p2){alert('Les mots de passe ne correspondent pas');return;}
+  if(!reponseSecu){alert('Répondez à la question de sécurité (utile pour récupérer votre compte)');return;}
   const dialSelectionne = document.querySelector('#panel-register .csel').value;
   const tel = buildPhone('#panel-register','rtel');
   const btn=document.querySelector('#panel-register .btn-main');
   const original = btn.innerHTML;
   btn.innerHTML='⏳ Création...'; btn.disabled = true;
-  const body={nom:document.getElementById('rname').value,telephone:tel,password:p1,referral:document.getElementById('rref').value};
+  const body={
+    nom:document.getElementById('rname').value,
+    telephone:tel,
+    password:p1,
+    referral:document.getElementById('rref').value,
+    question_securite:document.getElementById('rquestion').value,
+    reponse_securite:reponseSecu
+  };
   try {
     const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d=await r.json().catch(()=>({}));
@@ -293,6 +367,82 @@ setInterval(()=>{
     sw('register');
   }
 })();
+
+// ── MOT DE PASSE OUBLIÉ ──
+let forgotTelephone = '';
+let forgotResetToken = '';
+
+function ouvrirMotDePasseOublie(){
+  document.getElementById('forgot-overlay').style.display = 'flex';
+  document.getElementById('forgot-step1').style.display = 'block';
+  document.getElementById('forgot-step2').style.display = 'none';
+  document.getElementById('forgot-step3').style.display = 'none';
+  cacherErreurForgot();
+}
+function fermerMotDePasseOublie(){
+  document.getElementById('forgot-overlay').style.display = 'none';
+}
+function afficherErreurForgot(msg){
+  const el = document.getElementById('forgot-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function cacherErreurForgot(){
+  document.getElementById('forgot-error').style.display = 'none';
+}
+
+async function etapeObtenirQuestion(){
+  cacherErreurForgot();
+  const dial = document.getElementById('forgot-dial').value;
+  let local = document.getElementById('forgot-tel').value.trim().replace(/[\s.-]/g,'');
+  if(local.startsWith('0')) local = local.slice(1);
+  if(!local){ afficherErreurForgot('Entrez votre numéro de téléphone'); return; }
+  forgotTelephone = dial + local;
+  try {
+    const r = await fetch('/auth/mot-de-passe-oublie/question?telephone='+encodeURIComponent(forgotTelephone));
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ afficherErreurForgot(d.detail || 'Erreur'); return; }
+    document.getElementById('forgot-question-text').textContent = d.question_securite;
+    document.getElementById('forgot-step1').style.display = 'none';
+    document.getElementById('forgot-step2').style.display = 'block';
+  } catch(e){ afficherErreurForgot('Erreur réseau. Réessayez.'); }
+}
+
+async function etapeVerifierReponse(){
+  cacherErreurForgot();
+  const reponse = document.getElementById('forgot-reponse').value.trim();
+  if(!reponse){ afficherErreurForgot('Entrez votre réponse'); return; }
+  try {
+    const r = await fetch('/auth/mot-de-passe-oublie/verifier',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({telephone:forgotTelephone, reponse})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ afficherErreurForgot(d.detail || 'Réponse incorrecte'); return; }
+    forgotResetToken = d.reset_token;
+    document.getElementById('forgot-step2').style.display = 'none';
+    document.getElementById('forgot-step3').style.display = 'block';
+  } catch(e){ afficherErreurForgot('Erreur réseau. Réessayez.'); }
+}
+
+async function etapeReinitialiser(){
+  cacherErreurForgot();
+  const p1 = document.getElementById('forgot-p1').value;
+  const p2 = document.getElementById('forgot-p2').value;
+  if(!p1 || p1.length<4){ afficherErreurForgot('Mot de passe trop court (4 caractères minimum)'); return; }
+  if(p1 !== p2){ afficherErreurForgot('Les mots de passe ne correspondent pas'); return; }
+  try {
+    const r = await fetch('/auth/mot-de-passe-oublie/reinitialiser',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({reset_token:forgotResetToken, nouveau_mot_de_passe:p1})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){ afficherErreurForgot(d.detail || 'Erreur'); return; }
+    alert('✅ Mot de passe réinitialisé ! Connectez-vous avec le nouveau.');
+    fermerMotDePasseOublie();
+    sw('login');
+  } catch(e){ afficherErreurForgot('Erreur réseau. Réessayez.'); }
+}
 </script>
 </body>
 </html>
