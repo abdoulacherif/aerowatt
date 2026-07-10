@@ -152,6 +152,19 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
       Dépôt manuel
     </div>
+    <div style="text-align:center;padding:20px 10px">
+      <div style="font-size:40px;margin-bottom:14px">🛠️</div>
+      <div style="font-size:14px;font-weight:800;color:var(--black);margin-bottom:8px">Bientôt disponible</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px">
+        Le dépôt manuel n'est pas encore disponible pour votre pays.<br>
+        Contactez notre service client pour effectuer votre dépôt en attendant.
+      </div>
+      <button class="submit-btn btn-orange" onclick="location.href='/support'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        Contacter le service client
+      </button>
+    </div>
+    <!-- Ancien formulaire de dépôt manuel, conservé pour réactivation future :
     <div class="form-group">
       <label class="form-label">Pays</label>
       <select class="form-select" id="manuel-depot-pays" onchange="onManuelDepotPaysChange()"></select>
@@ -182,6 +195,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       2. Entrez votre numéro et la référence<br>
       3. Validation sous 5-30 minutes
     </div>
+    -->
   </div>
 </div>
 
@@ -399,7 +413,6 @@ async function init(){
     });
 
     initAutoPays();
-    initManuelDepotPays();
     initRetraitPays();
 
     await checkInvestissement();
