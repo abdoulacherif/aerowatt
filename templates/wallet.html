@@ -115,7 +115,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     <div class="subtab" id="subtab-manuel" onclick="switchDepotMode('manuel')">✍️ Manuel</div>
   </div>
 
-  <!-- DÉPÔT AUTOMATIQUE (LeekPay) -->
+  <!-- DÉPÔT AUTOMATIQUE (SoleasPay) -->
   <div id="depot-auto" class="form-card">
     <div class="form-title">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="#00B86B"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 18v4h6l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95z"/></svg>
@@ -133,16 +133,20 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <label class="form-label" id="auto-montant-label">Montant (XOF)</label>
       <input type="number" class="form-input" id="auto-montant" placeholder="Minimum 500 XOF">
     </div>
-    <button class="submit-btn btn-orange" id="auto-submit-btn" onclick="lancerLeekPay()">
+    <div class="form-group">
+      <label class="form-label">Votre numéro Mobile Money</label>
+      <input type="tel" class="form-input" id="auto-tel" placeholder="Ex: 690000001">
+    </div>
+    <button class="submit-btn btn-orange" id="auto-submit-btn" onclick="lancerDepotAuto()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 18v4h6l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95z"/></svg>
       Recharger
     </button>
     <div class="info-box">
       <strong>Comment ça marche :</strong><br>
       1. Choisissez votre pays et opérateur<br>
-      2. Entrez le montant et appuyez sur Recharger<br>
-      3. La fenêtre LeekPay s'ouvre pour finaliser le paiement<br>
-      4. Validation par notre équipe sous quelques minutes
+      2. Entrez le montant et votre numéro Mobile Money<br>
+      3. Vous recevrez une demande de confirmation sur votre téléphone<br>
+      4. Validez le paiement, votre solde est crédité automatiquement après confirmation
     </div>
   </div>
 
@@ -267,16 +271,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
   <a class="nav-item" href="/profil"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4-1.8 4-4s-1.3-4-4-4-4 1.8-4 4 1.3 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z" fill="#7A9BB5"/></svg><span class="nav-lbl">Moi</span></a>
 </div>
 
-<script src="https://leekpay.fr/js/leekpay.js"></script>
 <script>
-const LEEKPAY_PUBLIC_KEY = 'pk_live_h0RQu365IhnhdXkW2YeWZiDmKQGo7Pn1';
+// SoleasPay est une API REST (pas de SDK JS) : toute la logique de paiement
+// passe par notre backend FastAPI (/api/depot), qui détient la clé secrète.
 const SUPABASE_URL='https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 const TOKEN = localStorage.getItem('token');
 
 // ── PAYS & OPÉRATEURS ──
-// Tous les pays sont éligibles au dépôt automatique LeekPay.
-// devise : XOF pour la zone UEMOA, USD pour les autres (LeekPay ne supporte que XOF/EUR/USD).
+// Tous les pays sont éligibles au dépôt automatique SoleasPay.
+// devise : XOF pour la zone UEMOA, USD pour les autres (adapter selon les devises supportées par SoleasPay).
 const PAYS = [
   {code:'SN', nom:"Sénégal", dial:'+221', devise:'XOF', operateurs:['Orange Money','Wave','Free Money']},
   {code:'CI', nom:"Côte d'Ivoire", dial:'+225', devise:'XOF', operateurs:['Orange Money','MTN Money','Moov Money','Wave']},
@@ -445,58 +449,51 @@ function switchTab(tab){
   if(tab==='historique') loadHistorique();
 }
 
-// ── DÉPÔT AUTOMATIQUE (LeekPay) ──
-// La confirmation reste validée manuellement par l'admin (voir note ci-dessous) :
-// LeekPay recommande de ne jamais créditer uniquement sur la base du navigateur.
-// Ici, on pré-remplit juste la référence de paiement automatiquement au lieu de la saisie manuelle.
-function lancerLeekPay(){
+// ── DÉPÔT AUTOMATIQUE (SoleasPay Pay-In) ──
+// Pas de SDK JS côté SoleasPay : on envoie directement montant + numéro à notre backend,
+// qui appelle SoleasPay avec la clé secrète et attend la confirmation (webhook ou vérif manuelle).
+async function lancerDepotAuto(){
   const montant = parseInt(document.getElementById('auto-montant').value);
+  const tel = document.getElementById('auto-tel').value.trim();
   const devise = selectedAutoPays.devise;
   const minimum = devise==='XOF' ? 500 : 1;
   if(!montant || montant < minimum){
     showModal('⚠️','Montant insuffisant','Minimum '+minimum+' '+devise);
     return;
   }
-  if(typeof LeekPay === 'undefined'){
-    showModal('❌','Erreur',"Le module de paiement LeekPay n'a pas pu se charger. Réessayez.");
+  if(!tel){
+    showModal('⚠️','Champ manquant','Entrez votre numéro Mobile Money');
     return;
   }
-  LeekPay.checkout({
-    amount: montant,
-    currency: devise,
-    apiKey: LEEKPAY_PUBLIC_KEY,
-    description: 'Dépôt AEROWATT - '+selectedAutoMethod+' - '+selectedAutoPays.nom,
-    onSuccess: async function(data){
-      await soumettreDepotAuto(data, montant);
-    },
-    onCancel: function(){
-      showModal('❌','Paiement annulé','Vous avez annulé le paiement.');
-    }
-  });
-}
-
-async function soumettreDepotAuto(leekpayData, montant){
+  const btn = document.getElementById('auto-submit-btn');
+  const btnHtml = btn.innerHTML;
+  btn.textContent = 'Envoi...'; btn.disabled = true;
   try {
     const r = await fetch('/api/depot',{
       method:'POST',
       headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
       body:JSON.stringify({
-        montant: leekpayData.amount || montant,
+        montant: montant,
         methode: selectedAutoMethod,
         pays: selectedAutoPays.nom,
-        reference: leekpayData.payment_id || ''
+        telephone: tel,
+        devise: devise
       })
     });
     const d = await r.json().catch(()=>({}));
     if(!r.ok){
-      showModal('❌','Erreur', d.detail || 'Le paiement a réussi mais la soumission a échoué. Contactez le support avec votre référence : '+(leekpayData.payment_id||'—'));
+      showModal('❌','Dépôt refusé', d.detail || 'Une erreur est survenue. Réessayez.');
+      btn.innerHTML = btnHtml; btn.disabled = false;
       return;
     }
     document.getElementById('auto-montant').value = '';
-    showModal('⏳','Paiement reçu !','Votre dépôt de '+montant.toLocaleString()+' XOF est en cours de validation par notre équipe.');
+    document.getElementById('auto-tel').value = '';
+    showModal('⏳','Confirmation demandée','Validez le paiement de '+montant.toLocaleString()+' '+devise+' reçu sur votre téléphone ('+tel+'). Votre solde sera crédité après confirmation.');
   } catch(e){
-    showModal('❌','Erreur réseau',"Le paiement a réussi mais nous n'avons pas pu l'enregistrer. Contactez le support avec votre référence : "+(leekpayData.payment_id||'—'));
+    showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
   }
+  btn.innerHTML = btnHtml;
+  btn.disabled = false;
 }
 
 // ── DÉPÔT MANUEL ──
