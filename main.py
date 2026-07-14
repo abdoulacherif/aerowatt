@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 from config import supabase, SECRET_KEY, ALGORITHM
+from soleaspay_service import collect_payment, SoleasPayError
 
 load_dotenv()
 
@@ -22,6 +23,9 @@ except:
 
 from routers import auth
 app.include_router(auth.router)
+
+from routers import depot as depot_router
+app.include_router(depot_router.router)
 
 # ── PAGES HTML ──
 # no-store empêche le navigateur (surtout Chrome Android) de garder une version en cache :
@@ -140,25 +144,58 @@ async def get_transactions(user_id: str = Depends(get_current_user_id)):
     return txs.data
 
 @app.post("/api/depot")
-async def demander_depot(data: dict, user_id: str = Depends(get_current_user_id)):
+async def demander_depot(data: dict, user: dict = Depends(get_current_user)):
+    """
+    Dépôt automatique via SoleasPay (Pay-In).
+    On appelle SoleasPay AVANT d'enregistrer quoi que ce soit : si SoleasPay refuse,
+    on ne crée pas de transaction fantôme dans la base.
+    """
     montant = data.get("montant")
     if not montant or montant <= 0:
         raise HTTPException(400, "Montant invalide")
+
+    telephone = data.get("telephone", "")
+    methode = data.get("methode", "")
+    devise = data.get("devise", "XAF")
+
+    if not telephone:
+        raise HTTPException(400, "Numéro Mobile Money requis")
+
     try:
+        result = collect_payment(
+            wallet=telephone,
+            amount=montant,
+            currency=devise,
+            operateur=methode,
+            payer_name=user.get("nom", "Client AEROWATT"),
+            payer_email=user.get("email"),
+        )
+    except SoleasPayError as e:
+        print(f"[ERREUR SoleasPay /api/depot] {e}")
+        raise HTTPException(400, str(e))
+
+    try:
+        # result["order_id"] est stocké dans `reference` : c'est ce que le webhook
+        # SoleasPay renverra dans `external_reference` pour retrouver cette transaction.
         tx = supabase.table("transactions").insert({
-            "user_id": user_id,
+            "user_id": user["id"],
             "type": "depot",
             "montant": montant,
-            "methode": data.get("methode", ""),
-            "numero_envoi": data.get("telephone", ""),
-            "reference": data.get("reference", ""),
+            "methode": methode,
+            "numero_envoi": telephone,
+            "reference": result["order_id"],
             "pays": data.get("pays", ""),
             "statut": "en_attente"
         }).execute()
     except Exception as e:
         print(f"[ERREUR /api/depot] {e}")  # visible dans les logs Vercel pour diagnostic
         raise HTTPException(500, "Une erreur est survenue. Réessayez plus tard.")
-    return {"message": "Dépôt soumis", "id": tx.data[0]["id"]}
+
+    return {
+        "message": "Dépôt initié. Confirmez le paiement reçu sur votre téléphone.",
+        "id": tx.data[0]["id"],
+        "order_id": result["order_id"]
+    }
 
 @app.post("/api/retrait")
 async def demander_retrait(data: dict, user: dict = Depends(get_current_user)):
