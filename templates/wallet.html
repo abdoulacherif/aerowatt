@@ -87,7 +87,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 
 <div class="solde-card">
   <div class="solde-lbl">Solde disponible</div>
-  <div class="solde-val" id="solde-val">— XAF</div>
+  <div class="solde-val" id="solde-val">— FCFA</div>
   <div class="solde-sub">Mis à jour en temps réel</div>
 </div>
 
@@ -130,8 +130,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <div class="methods" id="auto-methods"></div>
     </div>
     <div class="form-group">
-      <label class="form-label" id="auto-montant-label">Montant (XOF)</label>
-      <input type="number" class="form-input" id="auto-montant" placeholder="Minimum 500 XOF">
+      <label class="form-label" id="auto-montant-label">Montant (FCFA)</label>
+      <input type="number" class="form-input" id="auto-montant" placeholder="Minimum 500 FCFA">
     </div>
     <div class="form-group">
       <label class="form-label">Votre numéro Mobile Money</label>
@@ -145,8 +145,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
       <strong>Comment ça marche :</strong><br>
       1. Choisissez votre pays et opérateur<br>
       2. Entrez le montant et votre numéro Mobile Money<br>
-      3. Vous recevrez une demande de confirmation sur votre téléphone<br>
-      4. Validez le paiement, votre solde est crédité automatiquement après confirmation
+      3. Vous serez redirigé vers la page de paiement sécurisée<br>
+      4. Effectuez le paiement, votre solde sera crédité après validation par l'administrateur
     </div>
   </div>
 
@@ -179,7 +179,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     </div>
     <div class="form-group">
       <label class="form-label">Montant</label>
-      <input type="number" class="form-input" id="depot-montant" placeholder="Minimum 4,000 XAF">
+      <input type="number" class="form-input" id="depot-montant" placeholder="Minimum 4,000 FCFA">
     </div>
     <div class="form-group">
       <label class="form-label">Votre numéro expéditeur</label>
@@ -223,7 +223,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     </div>
     <div class="form-group">
       <label class="form-label">Montant à retirer</label>
-      <input type="number" class="form-input" id="retrait-montant" placeholder="Minimum 1,200 XAF">
+      <input type="number" class="form-input" id="retrait-montant" placeholder="Minimum 1,200 FCFA">
     </div>
     <div class="form-group">
       <label class="form-label">Numéro de réception</label>
@@ -235,7 +235,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
     </button>
     <div class="info-box">
       <strong>Informations retrait :</strong><br>
-      • Minimum : <strong>1,200 XAF</strong><br>
+      • Minimum : <strong>1,200 FCFA</strong><br>
       • Traitement : <strong>5-60 minutes</strong><br>
       • Disponible 24h/7j<br>
       • Réservé aux investisseurs actifs
@@ -272,32 +272,34 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);max-width:430px;margin
 </div>
 
 <script>
-// SoleasPay est une API REST (pas de SDK JS) : toute la logique de paiement
-// passe par notre backend FastAPI (/api/depot), qui détient la clé secrète.
+// SoleasPay : lien de paiement hébergé fixe. Le dépôt est enregistré en "en_attente"
+// dans Supabase via notre backend, puis l'utilisateur est redirigé vers ce lien pour payer.
+// C'est l'admin qui valide manuellement le dépôt après vérification du paiement reçu.
+const LIEN_PAIEMENT_SOLEASPAY = 'https://soleaspay.com/m/3VZ9UBVPJE';
+
 const SUPABASE_URL='https://qybvdpxtermlmgpgqaqt.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YnZkcHh0ZXJtbG1ncGdxYXF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjA5NjUsImV4cCI6MjA5NjQ5Njk2NX0.dw5Z_hFCa1odg4ZWM6ylq_6UGilZ7xMEnYXws559yMk';
 const TOKEN = localStorage.getItem('token');
 
 // ── PAYS & OPÉRATEURS ──
-// Tous les pays sont éligibles au dépôt automatique SoleasPay.
-// devise : XOF pour la zone UEMOA, USD pour les autres (adapter selon les devises supportées par SoleasPay).
+// Tous les pays sont éligibles au dépôt automatique. Tout est traité en FCFA.
 const PAYS = [
-  {code:'SN', nom:"Sénégal", dial:'+221', devise:'XOF', operateurs:['Orange Money','Wave','Free Money']},
-  {code:'CI', nom:"Côte d'Ivoire", dial:'+225', devise:'XOF', operateurs:['Orange Money','MTN Money','Moov Money','Wave']},
-  {code:'ML', nom:"Mali", dial:'+223', devise:'XOF', operateurs:['Orange Money','Moov Money']},
-  {code:'BF', nom:"Burkina Faso", dial:'+226', devise:'XOF', operateurs:['Orange Money','Moov Money']},
-  {code:'NE', nom:"Niger", dial:'+227', devise:'XOF', operateurs:['Orange Money','Moov Money']},
-  {code:'BJ', nom:"Bénin", dial:'+229', devise:'XOF', operateurs:['MTN Money','Moov Money']},
-  {code:'TG', nom:"Togo", dial:'+228', devise:'XOF', operateurs:['Togocom T-Money','Moov Flooz']},
-  {code:'GA', nom:"Gabon", dial:'+241', devise:'USD', operateurs:['Airtel Money','Moov Money']},
-  {code:'CM', nom:"Cameroun", dial:'+237', devise:'USD', operateurs:['Orange Money','MTN Mobile Money']},
-  {code:'CG', nom:"Congo-Brazzaville", dial:'+242', devise:'USD', operateurs:['Airtel Money','MTN Mobile Money']},
-  {code:'CD', nom:"RD Congo", dial:'+243', devise:'USD', operateurs:['Orange Money','Airtel Money','M-Pesa']},
-  {code:'UG', nom:"Ouganda", dial:'+256', devise:'USD', operateurs:['MTN Mobile Money','Airtel Money']},
-  {code:'KE', nom:"Kenya", dial:'+254', devise:'USD', operateurs:['M-Pesa','Airtel Money']},
-  {code:'RW', nom:"Rwanda", dial:'+250', devise:'USD', operateurs:['MTN Mobile Money','Airtel Money']},
-  {code:'ZM', nom:"Zambie", dial:'+260', devise:'USD', operateurs:['MTN Mobile Money','Airtel Money']},
-  {code:'GH', nom:"Ghana", dial:'+233', devise:'USD', operateurs:['MTN Mobile Money','Vodafone Cash','AirtelTigo Money']},
+  {code:'SN', nom:"Sénégal", dial:'+221', operateurs:['Orange Money','Wave','Free Money']},
+  {code:'CI', nom:"Côte d'Ivoire", dial:'+225', operateurs:['Orange Money','MTN Money','Moov Money','Wave']},
+  {code:'ML', nom:"Mali", dial:'+223', operateurs:['Orange Money','Moov Money']},
+  {code:'BF', nom:"Burkina Faso", dial:'+226', operateurs:['Orange Money','Moov Money']},
+  {code:'NE', nom:"Niger", dial:'+227', operateurs:['Orange Money','Moov Money']},
+  {code:'BJ', nom:"Bénin", dial:'+229', operateurs:['MTN Money','Moov Money']},
+  {code:'TG', nom:"Togo", dial:'+228', operateurs:['Togocom T-Money','Moov Flooz']},
+  {code:'GA', nom:"Gabon", dial:'+241', operateurs:['Airtel Money','Moov Money']},
+  {code:'CM', nom:"Cameroun", dial:'+237', operateurs:['Orange Money','MTN Mobile Money']},
+  {code:'CG', nom:"Congo-Brazzaville", dial:'+242', operateurs:['Airtel Money','MTN Mobile Money']},
+  {code:'CD', nom:"RD Congo", dial:'+243', operateurs:['Orange Money','Airtel Money','M-Pesa']},
+  {code:'UG', nom:"Ouganda", dial:'+256', operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'KE', nom:"Kenya", dial:'+254', operateurs:['M-Pesa','Airtel Money']},
+  {code:'RW', nom:"Rwanda", dial:'+250', operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'ZM', nom:"Zambie", dial:'+260', operateurs:['MTN Mobile Money','Airtel Money']},
+  {code:'GH', nom:"Ghana", dial:'+233', operateurs:['MTN Mobile Money','Vodafone Cash','AirtelTigo Money']},
 ];
 const FLAGS = {SN:'🇸🇳',CI:'🇨🇮',ML:'🇲🇱',BF:'🇧🇫',NE:'🇳🇪',BJ:'🇧🇯',TG:'🇹🇬',GA:'🇬🇦',CM:'🇨🇲',CG:'🇨🇬',CD:'🇨🇩',UG:'🇺🇬',KE:'🇰🇪',RW:'🇷🇼',ZM:'🇿🇲',GH:'🇬🇭'};
 
@@ -336,15 +338,14 @@ function initAutoPays(){
   updateAutoDeviseLabel();
 }
 function updateAutoDeviseLabel(){
-  document.getElementById('auto-montant-label').textContent = 'Montant ('+selectedAutoPays.devise+')';
-  document.getElementById('auto-montant').placeholder = selectedAutoPays.devise==='XOF' ? 'Minimum 500 XOF' : 'Minimum 1 '+selectedAutoPays.devise;
+  document.getElementById('auto-montant-label').textContent = 'Montant (FCFA)';
+  document.getElementById('auto-montant').placeholder = 'Minimum 500 FCFA';
 }
 function onAutoPaysChange(){
   const code = document.getElementById('auto-pays').value;
   selectedAutoPays = PAYS.find(p=>p.code===code);
   selectedAutoMethod = selectedAutoPays.operateurs[0];
   renderMethodButtons('auto-methods', selectedAutoPays, selectedAutoMethod, 'selectAutoMethod');
-  updateAutoDeviseLabel();
 }
 function selectAutoMethod(op, btn){
   selectedAutoMethod = op;
@@ -405,7 +406,7 @@ async function init(){
     const u = await r.json();
     userSolde = u.solde||0;
     userID = u.id;
-    document.getElementById('solde-val').textContent = userSolde.toLocaleString()+' XAF';
+    document.getElementById('solde-val').textContent = userSolde.toLocaleString()+' FCFA';
 
     const cfg = await fetch(SUPABASE_URL+'/rest/v1/config',{
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
@@ -449,16 +450,15 @@ function switchTab(tab){
   if(tab==='historique') loadHistorique();
 }
 
-// ── DÉPÔT AUTOMATIQUE (SoleasPay Pay-In) ──
-// Pas de SDK JS côté SoleasPay : on envoie directement montant + numéro à notre backend,
-// qui appelle SoleasPay avec la clé secrète et attend la confirmation (webhook ou vérif manuelle).
+// ── DÉPÔT AUTOMATIQUE ──
+// 1. On enregistre la demande en base avec statut "en_attente" (l'admin valide manuellement après vérif du paiement)
+// 2. On redirige l'utilisateur vers le lien de paiement SoleasPay fixe
 async function lancerDepotAuto(){
   const montant = parseInt(document.getElementById('auto-montant').value);
   const tel = document.getElementById('auto-tel').value.trim();
-  const devise = selectedAutoPays.devise;
-  const minimum = devise==='XOF' ? 500 : 1;
+  const minimum = 500;
   if(!montant || montant < minimum){
-    showModal('⚠️','Montant insuffisant','Minimum '+minimum+' '+devise);
+    showModal('⚠️','Montant insuffisant','Minimum '+minimum+' FCFA');
     return;
   }
   if(!tel){
@@ -477,7 +477,8 @@ async function lancerDepotAuto(){
         methode: selectedAutoMethod,
         pays: selectedAutoPays.nom,
         telephone: tel,
-        devise: devise
+        devise: 'FCFA',
+        statut: 'en_attente'
       })
     });
     const d = await r.json().catch(()=>({}));
@@ -486,14 +487,17 @@ async function lancerDepotAuto(){
       btn.innerHTML = btnHtml; btn.disabled = false;
       return;
     }
+
     document.getElementById('auto-montant').value = '';
     document.getElementById('auto-tel').value = '';
-    showModal('⏳','Confirmation demandée','Validez le paiement de '+montant.toLocaleString()+' '+devise+' reçu sur votre téléphone ('+tel+'). Votre solde sera crédité après confirmation.');
+
+    // Redirection vers la page de paiement SoleasPay
+    window.location.href = LIEN_PAIEMENT_SOLEASPAY;
   } catch(e){
     showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
+    btn.innerHTML = btnHtml;
+    btn.disabled = false;
   }
-  btn.innerHTML = btnHtml;
-  btn.disabled = false;
 }
 
 // ── DÉPÔT MANUEL ──
@@ -501,7 +505,7 @@ async function soumettreDépôt(){
   const montant = parseInt(document.getElementById('depot-montant').value);
   const tel = document.getElementById('depot-tel').value.trim();
   const ref = document.getElementById('depot-ref').value.trim();
-  if(!montant||montant<minDepot){ showModal('⚠️','Montant insuffisant','Minimum de dépôt : '+minDepot.toLocaleString()+' XAF'); return; }
+  if(!montant||montant<minDepot){ showModal('⚠️','Montant insuffisant','Minimum de dépôt : '+minDepot.toLocaleString()+' FCFA'); return; }
   if(!tel){ showModal('⚠️','Champ manquant','Entrez votre numéro expéditeur'); return; }
   if(!ref){ showModal('⚠️','Champ manquant','Entrez la référence de transaction'); return; }
   const btn = document.querySelector('#depot-manuel .submit-btn');
@@ -538,8 +542,8 @@ async function soumettreRetrait(){
   }
   const montant = parseInt(document.getElementById('retrait-montant').value);
   const tel = document.getElementById('retrait-tel').value.trim();
-  if(!montant||montant<minRetrait){ showModal('⚠️','Montant insuffisant','Minimum de retrait : '+minRetrait.toLocaleString()+' XAF'); return; }
-  if(montant>userSolde){ showModal('⚠️','Solde insuffisant','Votre solde est de '+userSolde.toLocaleString()+' XAF'); return; }
+  if(!montant||montant<minRetrait){ showModal('⚠️','Montant insuffisant','Minimum de retrait : '+minRetrait.toLocaleString()+' FCFA'); return; }
+  if(montant>userSolde){ showModal('⚠️','Solde insuffisant','Votre solde est de '+userSolde.toLocaleString()+' FCFA'); return; }
   if(!tel){ showModal('⚠️','Champ manquant','Entrez votre numéro de réception'); return; }
   const btn = document.getElementById('retrait-submit-btn');
   const btnHtml = btn.innerHTML;
@@ -558,7 +562,7 @@ async function soumettreRetrait(){
     }
     document.getElementById('retrait-montant').value='';
     document.getElementById('retrait-tel').value='';
-    showModal('✅','Retrait demandé !',`Votre retrait de ${montant.toLocaleString()} XAF vers ${selectedRetraitMethod} (${tel}) sera traité sous 5-60 minutes.`);
+    showModal('✅','Retrait demandé !',`Votre retrait de ${montant.toLocaleString()} FCFA vers ${selectedRetraitMethod} (${tel}) sera traité sous 5-60 minutes.`);
   } catch(e){
     showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
   }
@@ -590,7 +594,7 @@ async function loadHistorique(){
           <div class="hist-status ${sc}">${t.statut}</div>
         </div>
         <div style="text-align:right">
-          <div class="hist-amount" style="color:${color}">${sign}${(t.montant||0).toLocaleString()} XAF</div>
+          <div class="hist-amount" style="color:${color}">${sign}${(t.montant||0).toLocaleString()} FCFA</div>
         </div>
       </div>`;
     }).join('');
