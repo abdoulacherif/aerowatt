@@ -451,53 +451,36 @@ function switchTab(tab){
 }
 
 // ── DÉPÔT AUTOMATIQUE ──
-// 1. On enregistre la demande en base avec statut "en_attente" (l'admin valide manuellement après vérif du paiement)
-// 2. On redirige l'utilisateur vers le lien de paiement SoleasPay fixe
+// Enregistre la transaction en "en_attente" puis ouvre directement le lien de paiement. Rien d'autre.
 async function lancerDepotAuto(){
   const montant = parseInt(document.getElementById('auto-montant').value);
   const tel = document.getElementById('auto-tel').value.trim();
-  const minimum = 500;
-  if(!montant || montant < minimum){
-    showModal('⚠️','Montant insuffisant','Minimum '+minimum+' FCFA');
+
+  if(!montant || montant < 500){
+    showModal('⚠️','Montant insuffisant','Minimum 500 FCFA');
     return;
   }
   if(!tel){
     showModal('⚠️','Champ manquant','Entrez votre numéro Mobile Money');
     return;
   }
-  const btn = document.getElementById('auto-submit-btn');
-  const btnHtml = btn.innerHTML;
-  btn.textContent = 'Envoi...'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/depot',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        montant: montant,
-        methode: selectedAutoMethod,
-        pays: selectedAutoPays.nom,
-        telephone: tel,
-        devise: 'FCFA',
-        statut: 'en_attente'
-      })
-    });
-    const d = await r.json().catch(()=>({}));
-    if(!r.ok){
-      showModal('❌','Dépôt refusé', d.detail || 'Une erreur est survenue. Réessayez.');
-      btn.innerHTML = btnHtml; btn.disabled = false;
-      return;
-    }
 
-    document.getElementById('auto-montant').value = '';
-    document.getElementById('auto-tel').value = '';
+  // Enregistre la transaction en attente
+  await fetch('/api/depot',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      montant: montant,
+      methode: selectedAutoMethod,
+      pays: selectedAutoPays.nom,
+      telephone: tel,
+      devise: 'FCFA',
+      statut: 'en_attente'
+    })
+  });
 
-    // Redirection vers la page de paiement SoleasPay
-    window.location.href = LIEN_PAIEMENT_SOLEASPAY;
-  } catch(e){
-    showModal('❌','Erreur réseau','Impossible de contacter le serveur. Réessayez.');
-    btn.innerHTML = btnHtml;
-    btn.disabled = false;
-  }
+  // Ouvre directement le lien de paiement
+  window.location.href = LIEN_PAIEMENT_SOLEASPAY;
 }
 
 // ── DÉPÔT MANUEL ──
