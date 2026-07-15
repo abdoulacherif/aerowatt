@@ -465,19 +465,24 @@ async function lancerDepotAuto(){
     return;
   }
 
-  // Enregistre la transaction en attente
-  await fetch('/api/depot',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
-    body:JSON.stringify({
-      montant: montant,
-      methode: selectedAutoMethod,
-      pays: selectedAutoPays.nom,
-      telephone: tel,
-      devise: 'FCFA',
-      statut: 'en_attente'
-    })
-  });
+  try {
+    // keepalive garantit que la requête part bien même si on navigue juste après
+    await fetch('/api/depot',{
+      method:'POST',
+      keepalive: true,
+      headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        montant: montant,
+        methode: selectedAutoMethod,
+        pays: selectedAutoPays.nom,
+        telephone: tel,
+        devise: 'FCFA',
+        statut: 'en_attente'
+      })
+    });
+  } catch(e){
+    console.log('Erreur enregistrement dépôt:', e);
+  }
 
   // Ouvre directement le lien de paiement
   window.location.href = LIEN_PAIEMENT_SOLEASPAY;
