@@ -154,6 +154,7 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
   <button class="admin-tab" onclick="switchAdminTab('retraits',this)">💸 Retraits</button>
   <button class="admin-tab" onclick="switchAdminTab('users',this)">👥 Utilisateurs</button>
   <button class="admin-tab" onclick="switchAdminTab('plans',this)">📊 Plans</button>
+  <button class="admin-tab" onclick="switchAdminTab('investissements',this)">📈 Investissements</button>
   <button class="admin-tab" onclick="switchAdminTab('config',this)">⚙️ Config</button>
   <button class="admin-tab" onclick="switchAdminTab('actualites',this)">📰 Actualités</button>
   <button class="admin-tab" onclick="switchAdminTab('notifs',this)">🔔 Notifications</button>
@@ -229,6 +230,23 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
       <option value="false">Non</option>
     </select>
     <button class="btn-save btn-green" onclick="creerPlan()">Créer le plan</button>
+  </div>
+</div>
+
+<!-- INVESTISSEMENTS (vue globale : qui a investi combien, du début à la fin) -->
+<div class="admin-panel" id="panel-investissements">
+  <div class="admin-section">
+    <div class="admin-section-title">🔍 Filtrer</div>
+    <input type="text" class="admin-input" id="search-invest" placeholder="Nom ou téléphone..." oninput="renderInvestissements()">
+    <select class="admin-select" id="filter-invest-statut" style="margin-top:10px" onchange="renderInvestissements()">
+      <option value="tous">Tous les statuts</option>
+      <option value="actif">Actifs uniquement</option>
+      <option value="termine">Terminés uniquement</option>
+    </select>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-title">📈 Tous les investissements</div>
+    <div id="investissements-list"><div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div></div>
   </div>
 </div>
 
@@ -513,7 +531,7 @@ function infoUser(userId) {
 // ── LOAD ALL ──
 async function loadAll() {
   await refreshUsersMap(); // toujours à jour avant d'afficher dépôts/retraits/users
-  await Promise.all([loadStats(), loadDepots(), loadRetraits(), loadUsers(), loadPlans(), loadConfig(), loadActu(), loadPreuves(), loadPartenaires()]);
+  await Promise.all([loadStats(), loadDepots(), loadRetraits(), loadUsers(), loadPlans(), loadInvestissements(), loadConfig(), loadActu(), loadPreuves(), loadPartenaires()]);
 }
 
 // ── STATS ──
@@ -821,6 +839,75 @@ async function sauvegarderDetailUser() {
     await refreshUsersMap();
     loadUsers();
   } catch(e) { showToast('Erreur sauvegarde: '+e.message, true); }
+}
+
+// ── INVESTISSEMENTS (vue globale) ──
+// Liste tous les investissements de tous les utilisateurs avec date de début ET date de fin.
+// La date de fin utilise la colonne de la table investments si elle existe (date_fin / fin_le /
+// date_expiration / expire_at), sinon elle est calculée à partir de la date de début + cycle_jours du plan.
+let allInvestments = [];
+let plansMapGlobal = {}; // id -> {nom, cycle_jours}
+
+function calculerDateFin(inv, plan) {
+  const champFin = inv.date_fin || inv.fin_le || inv.date_expiration || inv.expire_at || inv.date_fin_contrat;
+  if (champFin) return new Date(champFin);
+  const debut = new Date(inv.created_at);
+  const jours = plan?.cycle_jours || 0;
+  const fin = new Date(debut);
+  fin.setDate(fin.getDate() + jours);
+  return fin;
+}
+
+async function loadInvestissements() {
+  try {
+    const [invs, plans] = await Promise.all([
+      sb('investments','GET',null,'?order=created_at.desc&limit=200'),
+      sb('plans','GET',null,'?select=id,nom,cycle_jours')
+    ]);
+    plansMapGlobal = {};
+    plans.forEach(p=>plansMapGlobal[p.id]=p);
+    allInvestments = invs;
+    renderInvestissements();
+  } catch(e) {
+    document.getElementById('investissements-list').innerHTML = '<div style="text-align:center;color:var(--red);padding:20px">Erreur de chargement</div>';
+  }
+}
+
+function renderInvestissements() {
+  const c = document.getElementById('investissements-list');
+  const q = (document.getElementById('search-invest')?.value || '').toLowerCase();
+  const filtreStatut = document.getElementById('filter-invest-statut')?.value || 'tous';
+
+  const items = allInvestments.filter(i=>{
+    const u = infoUser(i.user_id);
+    const matchQ = !q || u.nom.toLowerCase().includes(q) || u.telephone.includes(q);
+    const matchStatut = filtreStatut==='tous' || (filtreStatut==='actif' && i.actif) || (filtreStatut==='termine' && !i.actif);
+    return matchQ && matchStatut;
+  });
+
+  if(!items.length){ c.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Aucun investissement</div>'; return; }
+
+  c.innerHTML = items.map(i=>{
+    const u = infoUser(i.user_id);
+    const plan = plansMapGlobal[i.plan_id];
+    const dateDebut = new Date(i.created_at);
+    const dateFin = calculerDateFin(i, plan);
+    const maintenant = new Date();
+    const estTermine = !i.actif || maintenant > dateFin;
+    return `
+    <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.07)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:800;color:var(--cyan)">${u.nom}</div>
+        <span class="status-badge ${estTermine?'s-ko':'s-ok'}">${estTermine?'Terminé':'Actif'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📞 ${u.telephone}</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">${plan?.nom || ('Plan #'+i.plan_id)} · ${(i.montant||0).toLocaleString()} XAF</div>
+      <div style="display:flex;gap:16px;font-size:11px;color:var(--muted)">
+        <div>🟢 Début : <span style="color:#fff">${dateDebut.toLocaleDateString('fr')}</span></div>
+        <div>🔴 Fin : <span style="color:#fff">${dateFin.toLocaleDateString('fr')}</span></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── PLANS ──
