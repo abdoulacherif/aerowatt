@@ -782,17 +782,26 @@ async function loadUserInvestments(userId) {
     const c = document.getElementById('udetail-investments');
     if(!invs.length){ c.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Aucun investissement</div>'; return; }
     let plans = [];
-    try { plans = await sb('plans','GET',null,'?select=id,nom'); } catch(e){}
+    try { plans = await sb('plans','GET',null,'?select=id,nom,cycle_jours'); } catch(e){}
     const planMap = {};
-    plans.forEach(p=>planMap[p.id]=p.nom);
-    c.innerHTML = invs.map(i=>`
+    plans.forEach(p=>planMap[p.id]=p);
+    c.innerHTML = invs.map(i=>{
+      const plan = planMap[i.plan_id];
+      const dateDebut = new Date(i.date_debut || i.created_at);
+      const dateFin = calculerDateFin(i, plan);
+      return `
       <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 12px;margin-bottom:6px">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:12px;font-weight:800">${planMap[i.plan_id] || ('Plan #'+i.plan_id)}</div>
+          <div style="font-size:12px;font-weight:800">${plan?.nom || ('Plan #'+i.plan_id)}</div>
           <div style="font-size:12px;font-weight:800;color:var(--cyan)">${(i.montant||0).toLocaleString()} XAF</div>
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">${new Date(i.created_at).toLocaleString('fr')} · ${i.actif?'<span style="color:var(--green)">Actif</span>':'<span style="color:var(--red)">Terminé</span>'}</div>
-      </div>`).join('');
+        <div style="display:flex;gap:12px;font-size:10px;color:var(--muted);margin-top:3px">
+          <div>🟢 ${dateDebut.toLocaleDateString('fr')}</div>
+          <div>🔴 ${dateFin.toLocaleDateString('fr')}</div>
+          <div>${i.actif?'<span style="color:var(--green)">Actif</span>':'<span style="color:var(--red)">Terminé</span>'}</div>
+        </div>
+      </div>`;
+    }).join('');
   } catch(e) { document.getElementById('udetail-investments').innerHTML = '<div style="font-size:12px;color:var(--red);padding:6px 0">Erreur de chargement</div>'; }
 }
 
@@ -849,9 +858,8 @@ let allInvestments = [];
 let plansMapGlobal = {}; // id -> {nom, cycle_jours}
 
 function calculerDateFin(inv, plan) {
-  const champFin = inv.date_fin || inv.fin_le || inv.date_expiration || inv.expire_at || inv.date_fin_contrat;
-  if (champFin) return new Date(champFin);
-  const debut = new Date(inv.created_at);
+  if (inv.date_fin) return new Date(inv.date_fin);
+  const debut = new Date(inv.date_debut || inv.created_at);
   const jours = plan?.cycle_jours || 0;
   const fin = new Date(debut);
   fin.setDate(fin.getDate() + jours);
@@ -890,7 +898,7 @@ function renderInvestissements() {
   c.innerHTML = items.map(i=>{
     const u = infoUser(i.user_id);
     const plan = plansMapGlobal[i.plan_id];
-    const dateDebut = new Date(i.created_at);
+    const dateDebut = new Date(i.date_debut || i.created_at);
     const dateFin = calculerDateFin(i, plan);
     const maintenant = new Date();
     const estTermine = !i.actif || maintenant > dateFin;
