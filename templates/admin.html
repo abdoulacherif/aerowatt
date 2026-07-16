@@ -395,6 +395,10 @@ body{font-family:'Nunito',sans-serif;background:#0A0F1E;color:#fff;min-height:10
     <button class="udetail-close" onclick="fermerDetailUser()">✕</button>
     <div class="admin-section-title">👤 Détails utilisateur</div>
     <div id="udetail-fields"><div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div></div>
+    <div class="admin-section-title" style="margin-top:18px">💼 Investissements (montant & date)</div>
+    <div id="udetail-investments"><div style="text-align:center;color:var(--muted);padding:10px">Chargement...</div></div>
+    <div class="admin-section-title" style="margin-top:18px">🔁 Historique dépôts / retraits</div>
+    <div id="udetail-transactions"><div style="text-align:center;color:var(--muted);padding:10px">Chargement...</div></div>
     <button class="btn-save btn-green" onclick="sauvegarderDetailUser()">💾 Enregistrer les modifications</button>
   </div>
 </div>
@@ -478,8 +482,37 @@ function showToast(msg, error=false) {
   setTimeout(()=>t.className='toast', 3000);
 }
 
+// ── ANNUAIRE UTILISATEURS (nom/téléphone/parrain/filleuls) ──
+// Ce cache est utilisé partout où on doit afficher "qui" a fait une action :
+// dépôts, retraits, liste des utilisateurs, fiche détail.
+let usersMap = {};      // id -> {nom, telephone, parrain_id, solde}
+let filleulsCount = {}; // parrain_id -> nombre de filleuls
+
+async function refreshUsersMap() {
+  try {
+    const all = await sb('users','GET',null,'?select=id,nom,telephone,parrain_id,solde');
+    usersMap = {};
+    filleulsCount = {};
+    all.forEach(u=>{ usersMap[u.id] = u; });
+    all.forEach(u=>{
+      if(u.parrain_id){
+        filleulsCount[u.parrain_id] = (filleulsCount[u.parrain_id]||0) + 1;
+      }
+    });
+  } catch(e) { console.log('Erreur refreshUsersMap', e); }
+}
+
+function infoUser(userId) {
+  const u = usersMap[userId];
+  return {
+    nom: u?.nom || 'Utilisateur inconnu',
+    telephone: u?.telephone || '—'
+  };
+}
+
 // ── LOAD ALL ──
 async function loadAll() {
+  await refreshUsersMap(); // toujours à jour avant d'afficher dépôts/retraits/users
   await Promise.all([loadStats(), loadDepots(), loadRetraits(), loadUsers(), loadPlans(), loadConfig(), loadActu(), loadPreuves(), loadPartenaires()]);
 }
 
@@ -505,19 +538,24 @@ async function loadDepots() {
     const txs = await sb('transactions', 'GET', null, '?type=eq.depot&order=created_at.desc&limit=50');
     const c = document.getElementById('depots-list');
     if(!txs.length){ c.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px">Aucun dépôt</div>'; return; }
-    c.innerHTML = txs.map(t=>`
+    c.innerHTML = txs.map(t=>{
+      const u = infoUser(t.user_id);
+      return `
     <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.07)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:800">${t.montant?.toLocaleString()} XAF</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:800;color:var(--cyan)">${u.nom}</div>
         <span class="status-badge ${t.statut==='approuve'?'s-ok':t.statut==='rejete'?'s-ko':'s-wait'}">${t.statut}</span>
       </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📞 ${u.telephone} · ID: ${t.user_id?.slice(0,8)}…</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:6px">${t.montant?.toLocaleString()} XAF</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${t.methode} · ${t.numero_envoi} · Réf: ${t.reference||'—'}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px">${new Date(t.created_at).toLocaleString('fr')}</div>
       ${t.statut==='en_attente'?`<div style="display:flex;gap:8px">
         <button class="btn-sm btn-green" onclick="validerTx('${t.id}','${t.user_id}',${t.montant},'depot')">✅ Approuver</button>
         <button class="btn-sm btn-red" onclick="rejeterTx('${t.id}')">❌ Rejeter</button>
       </div>`:''}
-    </div>`).join('');
+    </div>`;
+    }).join('');
   } catch(e) { showToast('Erreur chargement dépôts', true); }
 }
 
@@ -527,19 +565,24 @@ async function loadRetraits() {
     const txs = await sb('transactions', 'GET', null, '?type=eq.retrait&order=created_at.desc&limit=50');
     const c = document.getElementById('retraits-list');
     if(!txs.length){ c.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px">Aucun retrait</div>'; return; }
-    c.innerHTML = txs.map(t=>`
+    c.innerHTML = txs.map(t=>{
+      const u = infoUser(t.user_id);
+      return `
     <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.07)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:800">${t.montant?.toLocaleString()} XAF</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:800;color:var(--cyan)">${u.nom}</div>
         <span class="status-badge ${t.statut==='approuve'?'s-ok':t.statut==='rejete'?'s-ko':'s-wait'}">${t.statut}</span>
       </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📞 ${u.telephone} · ID: ${t.user_id?.slice(0,8)}…</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:6px">${t.montant?.toLocaleString()} XAF</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${t.methode} → ${t.numero_envoi}</div>
       <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px">${new Date(t.created_at).toLocaleString('fr')}</div>
       ${t.statut==='en_attente'?`<div style="display:flex;gap:8px">
         <button class="btn-sm btn-green" onclick="validerTx('${t.id}','${t.user_id}',${t.montant},'retrait')">✅ Payer</button>
         <button class="btn-sm btn-red" onclick="rejeterTx('${t.id}')">❌ Rejeter</button>
       </div>`:''}
-    </div>`).join('');
+    </div>`;
+    }).join('');
   } catch(e) { showToast('Erreur chargement retraits', true); }
 }
 
@@ -558,6 +601,7 @@ async function validerTx(txId, userId, montant, type) {
       await sb('users','PATCH',{solde:newSolde},`?id=eq.${userId}`);
     }
     showToast(type==='depot'?'✅ Dépôt approuvé + solde crédité':'✅ Retrait payé + solde débité');
+    await refreshUsersMap();
     loadDepots(); loadRetraits(); loadStats();
   } catch(e){ showToast('Erreur: '+e.message, true); }
 }
@@ -621,20 +665,25 @@ async function loadUsers() {
 
 function renderUsers(users) {
   const c = document.getElementById('users-list');
-  c.innerHTML = users.map(u=>`
+  c.innerHTML = users.map(u=>{
+    const nbFilleuls = filleulsCount[u.id] || 0;
+    const parrainNom = u.parrain_id ? (usersMap[u.parrain_id]?.nom || '—') : '—';
+    return `
   <div class="user-card">
     <div class="user-card-top">
       <div class="user-avatar">${(u.nom||'U').slice(0,2).toUpperCase()}</div>
       <div><div class="user-name">${u.nom}</div><div class="user-tel">${u.telephone}</div></div>
       <div class="user-solde">${(u.solde||0).toLocaleString()} XAF</div>
     </div>
-    <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px">Code: ${u.mon_code||'—'} · ${new Date(u.created_at).toLocaleDateString('fr')}</div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:6px">Code: ${u.mon_code||'—'} · ${new Date(u.created_at).toLocaleDateString('fr')}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">👥 ${nbFilleuls} filleul(s) · Parrainé par: <span style="color:#fff">${parrainNom}</span></div>
     <div class="user-actions">
       <button class="btn-sm" style="background:rgba(0,184,107,0.2);color:var(--green)" onclick="voirDetailUser('${u.id}')">📋 Détails</button>
       <button class="btn-sm" style="background:rgba(0,102,255,0.2);color:var(--cyan)" onclick="copierUID('${u.id}')">Copier ID</button>
       <button class="btn-sm btn-red" style="font-size:11px" onclick="bloquerUser('${u.id}',${!u.actif})">${u.actif?'Bloquer':'Débloquer'}</button>
     </div>
-  </div>`).join('');
+  </div>`;
+  }).join('');
 }
 
 async function searchUsers() {
@@ -668,17 +717,27 @@ const UDETAIL_READONLY = ['id','created_at','updated_at'];
 async function voirDetailUser(id) {
   try {
     document.getElementById('udetail-fields').innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Chargement...</div>';
+    document.getElementById('udetail-investments').innerHTML = '<div style="text-align:center;color:var(--muted);padding:10px">Chargement...</div>';
+    document.getElementById('udetail-transactions').innerHTML = '<div style="text-align:center;color:var(--muted);padding:10px">Chargement...</div>';
     document.getElementById('udetail-ov').classList.add('show');
     const rows = await sb('users','GET',null,`?id=eq.${id}`);
     if(!rows.length){ showToast('Utilisateur introuvable', true); fermerDetailUser(); return; }
     currentUserDetail = rows[0];
     renderUserDetailFields();
+    loadUserInvestments(id);
+    loadUserTransactions(id);
   } catch(e) { showToast('Erreur chargement utilisateur', true); fermerDetailUser(); }
 }
 
 function renderUserDetailFields() {
   const c = document.getElementById('udetail-fields');
-  c.innerHTML = Object.keys(currentUserDetail).map(key=>{
+  const nbFilleuls = filleulsCount[currentUserDetail.id] || 0;
+  const parrainNom = currentUserDetail.parrain_id ? (usersMap[currentUserDetail.parrain_id]?.nom || currentUserDetail.parrain_id) : 'Aucun';
+  c.innerHTML = `<div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px">
+      👥 <strong>${nbFilleuls}</strong> filleul(s) parrainé(s) par cet utilisateur<br>
+      🔗 Parrainé par : <strong>${parrainNom}</strong>
+    </div>` +
+    Object.keys(currentUserDetail).map(key=>{
     const val = currentUserDetail[key];
     const readonly = UDETAIL_READONLY.includes(key);
     if(typeof val === 'boolean') {
@@ -696,6 +755,44 @@ function renderUserDetailFields() {
       <input class="udetail-input" id="uf-${key}" type="${inputType}" value="${val===null||val===undefined?'':val}" ${readonly?'disabled':''}>
     </div>`;
   }).join('');
+}
+
+// Affiche tous les investissements de l'utilisateur : quel plan, combien, et à quelle date.
+async function loadUserInvestments(userId) {
+  try {
+    const invs = await sb('investments','GET',null,`?user_id=eq.${userId}&order=created_at.desc`);
+    const c = document.getElementById('udetail-investments');
+    if(!invs.length){ c.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Aucun investissement</div>'; return; }
+    let plans = [];
+    try { plans = await sb('plans','GET',null,'?select=id,nom'); } catch(e){}
+    const planMap = {};
+    plans.forEach(p=>planMap[p.id]=p.nom);
+    c.innerHTML = invs.map(i=>`
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 12px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;font-weight:800">${planMap[i.plan_id] || ('Plan #'+i.plan_id)}</div>
+          <div style="font-size:12px;font-weight:800;color:var(--cyan)">${(i.montant||0).toLocaleString()} XAF</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${new Date(i.created_at).toLocaleString('fr')} · ${i.actif?'<span style="color:var(--green)">Actif</span>':'<span style="color:var(--red)">Terminé</span>'}</div>
+      </div>`).join('');
+  } catch(e) { document.getElementById('udetail-investments').innerHTML = '<div style="font-size:12px;color:var(--red);padding:6px 0">Erreur de chargement</div>'; }
+}
+
+// Affiche l'historique dépôts/retraits de l'utilisateur (montant, statut, date).
+async function loadUserTransactions(userId) {
+  try {
+    const txs = await sb('transactions','GET',null,`?user_id=eq.${userId}&order=created_at.desc&limit=30`);
+    const c = document.getElementById('udetail-transactions');
+    if(!txs.length){ c.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Aucune transaction</div>'; return; }
+    c.innerHTML = txs.map(t=>`
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 12px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;font-weight:800">${t.type==='depot'?'💰 Dépôt':t.type==='retrait'?'💸 Retrait':t.type}</div>
+          <div style="font-size:12px;font-weight:800">${(t.montant||0).toLocaleString()} XAF</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${new Date(t.created_at).toLocaleString('fr')} · <span class="status-badge ${t.statut==='approuve'?'s-ok':t.statut==='rejete'?'s-ko':'s-wait'}">${t.statut}</span></div>
+      </div>`).join('');
+  } catch(e) { document.getElementById('udetail-transactions').innerHTML = '<div style="font-size:12px;color:var(--red);padding:6px 0">Erreur de chargement</div>'; }
 }
 
 function fermerDetailUser() {
@@ -721,6 +818,7 @@ async function sauvegarderDetailUser() {
     await sb('users','PATCH',updates,`?id=eq.${currentUserDetail.id}`);
     showToast('✅ Utilisateur mis à jour');
     fermerDetailUser();
+    await refreshUsersMap();
     loadUsers();
   } catch(e) { showToast('Erreur sauvegarde: '+e.message, true); }
 }
