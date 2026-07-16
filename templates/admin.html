@@ -795,10 +795,14 @@ async function loadUserInvestments(userId) {
           <div style="font-size:12px;font-weight:800">${plan?.nom || ('Plan #'+i.plan_id)}</div>
           <div style="font-size:12px;font-weight:800;color:var(--cyan)">${(i.montant||0).toLocaleString()} XAF</div>
         </div>
-        <div style="display:flex;gap:12px;font-size:10px;color:var(--muted);margin-top:3px">
+        <div style="display:flex;gap:12px;font-size:10px;color:var(--muted);margin-top:3px;margin-bottom:8px">
           <div>🟢 ${dateDebut.toLocaleDateString('fr')}</div>
           <div>🔴 ${dateFin.toLocaleDateString('fr')}</div>
           <div>${i.actif?'<span style="color:var(--green)">Actif</span>':'<span style="color:var(--red)">Terminé</span>'}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          ${i.actif?`<button class="btn-sm btn-orange" onclick="arreterInvestissement('${i.id}')">⏹ Arrêter</button>`:''}
+          <button class="btn-sm btn-red" onclick="supprimerInvestissement('${i.id}')">🗑 Supprimer</button>
         </div>
       </div>`;
     }).join('');
@@ -910,12 +914,39 @@ function renderInvestissements() {
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">📞 ${u.telephone}</div>
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">${plan?.nom || ('Plan #'+i.plan_id)} · ${(i.montant||0).toLocaleString()} XAF</div>
-      <div style="display:flex;gap:16px;font-size:11px;color:var(--muted)">
+      <div style="display:flex;gap:16px;font-size:11px;color:var(--muted);margin-bottom:10px">
         <div>🟢 Début : <span style="color:#fff">${dateDebut.toLocaleDateString('fr')}</span></div>
         <div>🔴 Fin : <span style="color:#fff">${dateFin.toLocaleDateString('fr')}</span></div>
       </div>
+      <div style="display:flex;gap:8px">
+        ${i.actif?`<button class="btn-sm btn-orange" onclick="arreterInvestissement('${i.id}')">⏹ Arrêter</button>`:''}
+        <button class="btn-sm btn-red" onclick="supprimerInvestissement('${i.id}')">🗑 Supprimer</button>
+      </div>
     </div>`;
   }).join('');
+}
+
+// Arrête un investissement en cours : passe actif=false et fixe la date de fin à maintenant
+// (l'investissement s'arrête réellement à cet instant, plutôt qu'à la date de fin prévue au départ).
+async function arreterInvestissement(id) {
+  try {
+    await sb('investments','PATCH',{actif:false, date_fin:new Date().toISOString()},`?id=eq.${id}`);
+    showToast('⏹ Investissement arrêté');
+    await loadInvestissements();
+    await loadStats();
+    if(currentUserDetail) loadUserInvestments(currentUserDetail.id);
+  } catch(e) { showToast('Erreur: '+e.message, true); }
+}
+
+async function supprimerInvestissement(id) {
+  if(!confirm('Supprimer définitivement cet investissement ? Cette action est irréversible.')) return;
+  try {
+    await sb('investments','DELETE',null,`?id=eq.${id}`);
+    showToast('🗑 Investissement supprimé');
+    await loadInvestissements();
+    await loadStats();
+    if(currentUserDetail) loadUserInvestments(currentUserDetail.id);
+  } catch(e) { showToast('Erreur: '+e.message, true); }
 }
 
 // ── PLANS ──
