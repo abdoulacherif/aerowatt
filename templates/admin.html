@@ -778,7 +778,7 @@ function renderUserDetailFields() {
 // Affiche tous les investissements de l'utilisateur : quel plan, combien, et à quelle date.
 async function loadUserInvestments(userId) {
   try {
-    const invs = await sb('investments','GET',null,`?user_id=eq.${userId}&order=created_at.desc`);
+    const invs = await sb('investments','GET',null,`?user_id=eq.${userId}&order=date_debut.desc`);
     const c = document.getElementById('udetail-investments');
     if(!invs.length){ c.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Aucun investissement</div>'; return; }
     let plans = [];
@@ -873,7 +873,7 @@ function calculerDateFin(inv, plan) {
 async function loadInvestissements() {
   try {
     const [invs, plans] = await Promise.all([
-      sb('investments','GET',null,'?order=created_at.desc&limit=200'),
+      sb('investments','GET',null,'?order=date_debut.desc&limit=200'),
       sb('plans','GET',null,'?select=id,nom,cycle_jours')
     ]);
     plansMapGlobal = {};
