@@ -40,3 +40,10 @@ jobs:
       # 6. Lance les tests automatiques
       - name: Exécution des tests
         run: gradle test
+
+# 7. Rend l'APK téléchargeable depuis l'onglet Actions
+      - name: Publication de l'APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: locafric-debug-apk
+          path: androidApp/build/outputs/apk/debug/*.apk
