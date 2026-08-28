@@ -3,7 +3,7 @@
 
     <application
         android:label="LOCAFRIC"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@android:drawable/sym_def_app_icon"
         android:theme="@style/Theme.Locafric">
 
         <activity
