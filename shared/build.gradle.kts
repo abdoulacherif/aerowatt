@@ -4,7 +4,13 @@ plugins {
 }
 
 kotlin {
-    androidTarget()
+    androidTarget {
+        compilations.all {
+            compilerOptions.configure {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
+    }
 
     listOf(
         iosX64(),
@@ -33,5 +39,10 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
