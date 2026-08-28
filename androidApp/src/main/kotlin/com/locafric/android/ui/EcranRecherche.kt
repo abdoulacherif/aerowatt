@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Un bien affiché dans les résultats de recherche
 data class BienRecherche(
     val id: String,
     val titre: String,
@@ -33,9 +32,7 @@ fun EcranRecherche(
     onRecherche: (pays: String, ville: String, quartier: String) -> Unit,
     onOuvrirBien: (BienRecherche) -> Unit
 ) {
-    var pays by remember { mutableStateOf("") }
-    var ville by remember { mutableStateOf("") }
-    var quartier by remember { mutableStateOf("") }
+    var localisation by remember { mutableStateOf(Localisation("", "", "")) }
 
     Column(
         modifier = Modifier
@@ -51,31 +48,15 @@ fun EcranRecherche(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
-            value = pays,
-            onValueChange = { pays = it },
-            label = { Text("Pays") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = ville,
-            onValueChange = { ville = it },
-            label = { Text("Ville") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = quartier,
-            onValueChange = { quartier = it },
-            label = { Text("Quartier (optionnel)") },
-            modifier = Modifier.fillMaxWidth()
+        SelecteurLocalisation(
+            localisation = localisation,
+            onLocalisationChange = { localisation = it }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Button(
-            onClick = { onRecherche(pays, ville, quartier) },
+            onClick = { onRecherche(localisation.pays, localisation.ville, localisation.quartier) },
             colors = ButtonDefaults.buttonColors(containerColor = BleuPrincipal),
             modifier = Modifier.fillMaxWidth().height(48.dp)
         ) {
