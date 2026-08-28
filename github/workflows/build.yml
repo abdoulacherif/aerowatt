@@ -1,0 +1,47 @@
+name: Build & Test LOCAFRIC
+
+# Ce workflow se déclenche automatiquement :
+# - à chaque envoi de code (push) sur la branche main
+# - à chaque pull request visant la branche main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Compilation et tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupère le code du dépôt
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      # 2. Installe Java (nécessaire pour Kotlin/Gradle)
+      - name: Installation de Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Met en cache les dépendances Gradle pour accélérer les prochains builds
+      - name: Mise en cache de Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # 4. Autorise l'exécution du script gradlew
+      - name: Rendre gradlew exécutable
+        run: chmod +x ./gradlew
+
+      # 5. Compile le module partagé (logique commune Android + iOS)
+      - name: Compilation du module partagé
+        run: ./gradlew :shared:build
+
+      # 6. Compile l'application Android
+      - name: Compilation de l'application Android
+        run: ./gradlew :androidApp:assembleDebug
+
+      # 7. Lance les tests automatiques
+      - name: Exécution des tests
+        run: ./gradlew test
