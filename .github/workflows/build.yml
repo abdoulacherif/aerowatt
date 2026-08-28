@@ -1,8 +1,5 @@
 name: Build & Test LOCAFRIC
 
-# Ce workflow se déclenche automatiquement :
-# - à chaque envoi de code (push) sur la branche main
-# - à chaque pull request visant la branche main
 on:
   push:
     branches: [ "main" ]
@@ -26,22 +23,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Met en cache les dépendances Gradle pour accélérer les prochains builds
-      - name: Mise en cache de Gradle
+      # 3. Installe Gradle directement (pas besoin de gradlew)
+      - name: Installation de Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.9'
 
-      # 4. Autorise l'exécution du script gradlew
-      - name: Rendre gradlew exécutable
-        run: chmod +x ./gradlew
-
-      # 5. Compile le module partagé (logique commune Android + iOS)
+      # 4. Compile le module partagé (logique commune Android + iOS)
       - name: Compilation du module partagé
-        run: ./gradlew :shared:build
+        run: gradle :shared:build
 
-      # 6. Compile l'application Android
+      # 5. Compile l'application Android
       - name: Compilation de l'application Android
-        run: ./gradlew :androidApp:assembleDebug
+        run: gradle :androidApp:assembleDebug
 
-      # 7. Lance les tests automatiques
+      # 6. Lance les tests automatiques
       - name: Exécution des tests
-        run: ./gradlew test
+        run: gradle test
