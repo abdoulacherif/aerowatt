@@ -256,7 +256,11 @@ fun LocafricApp() {
                                                 email = "$nomUtilisateur@exemple.com",
                                                 role = if (roleConnecte == RoleUtilisateur.BAILLEUR) "Bailleur" else "Locataire"
                                             ),
-                                            onDeconnexion = { ecranActuel = Ecran.Connexion }
+                                            onDeconnexion = { ecranActuel = Ecran.Connexion },
+                                            onDevenirBailleur = {
+                                                roleConnecte = RoleUtilisateur.BAILLEUR
+                                                ongletActif = OngletPrincipal.ACCUEIL
+                                            }
                                         )
                                     }
                                 }
