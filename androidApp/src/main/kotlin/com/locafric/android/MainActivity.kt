@@ -1,6 +1,5 @@
 package com.locafric.android
 
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -10,12 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.locafric.android.reseau.RequeteConnexion
 import com.locafric.android.reseau.RequeteInscription
 import com.locafric.android.reseau.RetrofitClient
@@ -76,7 +77,6 @@ fun LocafricApp() {
         }
     }
 
-    // Lance une recherche de biens au chargement de l'app
     LaunchedEffect(Unit) {
         try {
             val reponse = RetrofitClient.api.rechercherBiens(null, null, null)
