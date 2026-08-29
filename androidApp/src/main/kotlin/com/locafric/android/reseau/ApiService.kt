@@ -10,6 +10,8 @@ data class RequeteConnexion(val email: String, val motDePasse: String)
 data class UtilisateurReponse(val id: Int, val nomComplet: String? = null, val email: String, val role: String)
 data class AuthReponse(val utilisateur: UtilisateurReponse, val token: String)
 
+data class DonneesPays(val drapeau: String, val villes: Map<String, List<String>>)
+
 data class BienReponse(
     val id: Int,
     val titre: String,
@@ -34,6 +36,9 @@ interface ApiService {
         @Query("ville") ville: String?,
         @Query("quartier") quartier: String?
     ): Response<List<BienReponse>>
+
+@GET("localisations")
+    suspend fun recupererLocalisations(): Response<Map<String, DonneesPays>>
 
     @Multipart
     @POST("biens")
