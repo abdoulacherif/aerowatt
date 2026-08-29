@@ -24,7 +24,8 @@ data class ProfilUtilisateur(val nom: String, val email: String, val role: Strin
 @Composable
 fun EcranProfil(
     profil: ProfilUtilisateur,
-    onDeconnexion: () -> Unit
+    onDeconnexion: () -> Unit,
+    onDevenirBailleur: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxSize().background(FondClair).padding(16.dp),
@@ -59,6 +60,9 @@ fun EcranProfil(
 
         LigneProfil(titre = "Mes informations")
         LigneProfil(titre = "Documents et contrats")
+        if (profil.role == "Locataire") {
+            LigneProfil(titre = "Devenir bailleur (mettre un bien en location)", onClick = onDevenirBailleur)
+        }
         LigneProfil(titre = "Paramètres")
         LigneProfil(titre = "Aide et support")
 
@@ -73,8 +77,9 @@ fun EcranProfil(
 }
 
 @Composable
-private fun LigneProfil(titre: String) {
+private fun LigneProfil(titre: String, onClick: () -> Unit = {}) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
