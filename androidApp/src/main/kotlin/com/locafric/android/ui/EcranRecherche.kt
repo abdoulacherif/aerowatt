@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 
 data class BienRecherche(
     val id: String,
+    val bailleurId: Int,
     val titre: String,
     val pays: String,
     val ville: String,
