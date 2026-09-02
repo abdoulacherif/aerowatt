@@ -22,6 +22,8 @@ data class BienReponse(
     val loyer: String
 )
 
+data class DonneesPays(val drapeau: String, val villes: Map<String, List<String>>)
+
 data class RequeteContrat(val bienId: Int, val locataireId: Int, val montantLoyer: String, val dateDebut: String)
 data class ContratReponse(val id: Int, val bien_titre: String?, val montant_loyer: String, val signe_bailleur: Boolean, val signe_locataire: Boolean)
 
