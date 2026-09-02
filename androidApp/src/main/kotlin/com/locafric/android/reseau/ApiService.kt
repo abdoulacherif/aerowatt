@@ -10,10 +10,9 @@ data class RequeteConnexion(val email: String, val motDePasse: String)
 data class UtilisateurReponse(val id: Int, val nomComplet: String? = null, val email: String, val role: String)
 data class AuthReponse(val utilisateur: UtilisateurReponse, val token: String)
 
-data class DonneesPays(val drapeau: String, val villes: Map<String, List<String>>)
-
 data class BienReponse(
     val id: Int,
+    val bailleur_id: Int,
     val titre: String,
     val pays: String,
     val ville: String,
@@ -22,6 +21,13 @@ data class BienReponse(
     val capacite: Int,
     val loyer: String
 )
+
+data class RequeteContrat(val bienId: Int, val locataireId: Int, val montantLoyer: String, val dateDebut: String)
+data class ContratReponse(val id: Int, val bien_titre: String?, val montant_loyer: String, val signe_bailleur: Boolean, val signe_locataire: Boolean)
+
+data class RequeteMessage(val destinataireId: Int, val contenu: String)
+data class MessageReponse(val id: Int, val expediteur_id: Int, val destinataire_id: Int, val contenu: String, val date_envoi: String)
+data class ConversationReponse(val utilisateur_id: Int, val nom_complet: String, val dernier_message: String, val date_envoi: String)
 
 interface ApiService {
     @POST("auth/inscription")
@@ -37,9 +43,6 @@ interface ApiService {
         @Query("quartier") quartier: String?
     ): Response<List<BienReponse>>
 
-@GET("localisations")
-    suspend fun recupererLocalisations(): Response<Map<String, DonneesPays>>
-
     @Multipart
     @POST("biens")
     suspend fun ajouterBien(
@@ -54,4 +57,25 @@ interface ApiService {
         @Part("description") description: RequestBody,
         @Part photos: List<MultipartBody.Part>
     ): Response<Map<String, Any>>
+
+    @GET("localisations")
+    suspend fun recupererLocalisations(): Response<Map<String, DonneesPays>>
+
+    @POST("contrats")
+    suspend fun creerContrat(@Header("Authorization") token: String, @Body requete: RequeteContrat): Response<ContratReponse>
+
+    @GET("contrats")
+    suspend fun listerContrats(@Header("Authorization") token: String): Response<List<ContratReponse>>
+
+    @POST("contrats/{id}/signer")
+    suspend fun signerContrat(@Header("Authorization") token: String, @Path("id") id: Int): Response<ContratReponse>
+
+    @GET("messages/conversations")
+    suspend fun recupererConversations(@Header("Authorization") token: String): Response<List<ConversationReponse>>
+
+    @GET("messages/{autreId}")
+    suspend fun recupererFilMessages(@Header("Authorization") token: String, @Path("autreId") autreId: Int): Response<List<MessageReponse>>
+
+    @POST("messages")
+    suspend fun envoyerMessageApi(@Header("Authorization") token: String, @Body requete: RequeteMessage): Response<MessageReponse>
 }
