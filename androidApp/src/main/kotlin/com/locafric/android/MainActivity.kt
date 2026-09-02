@@ -9,7 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import import androidx.compose.foundation.background
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -49,8 +49,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Bannière d'erreur réutilisable, affichée en haut de n'importe quel écran.
-// Elle reste visible tant que l'utilisateur ne l'a pas fermée ou qu'une nouvelle action ne l'a pas remplacée.
 @Composable
 fun BanniereErreur(message: String?, onFermer: () -> Unit) {
     if (message != null) {
@@ -94,8 +92,6 @@ fun LocafricApp() {
         }
     }
 
-    // Chargement initial des biens au démarrage de l'app.
-    // Toute erreur (réseau, serveur) est affichée dans la bannière au lieu d'être silencieuse.
     LaunchedEffect(Unit) {
         try {
             val reponse = RetrofitClient.api.rechercherBiens(null, null, null)
@@ -133,11 +129,9 @@ fun LocafricApp() {
                                         nomUtilisateur = corps.utilisateur.nomComplet ?: corps.utilisateur.email
                                         ecranActuel = Ecran.Principal
                                     } else {
-                                        // Erreur renvoyée par notre serveur (ex: 401 mauvais mot de passe)
                                         messageErreur = "Connexion refusée (code ${reponse.code()}) : email ou mot de passe incorrect."
                                     }
                                 } catch (e: Exception) {
-                                    // Erreur réseau : pas de connexion internet, serveur injoignable, etc.
                                     messageErreur = "Impossible de contacter le serveur : ${e.message}"
                                 } finally {
                                     chargementEnCours = false
@@ -279,7 +273,6 @@ fun LocafricApp() {
                                     OngletPrincipal.MESSAGES -> {
                                         var messagesReels by remember { mutableStateOf<List<Message>>(emptyList()) }
 
-                                        // Recharge le fil de discussion à chaque fois que le contact change
                                         LaunchedEffect(contactActuelId) {
                                             val id = contactActuelId ?: return@LaunchedEffect
                                             try {
@@ -340,32 +333,12 @@ fun LocafricApp() {
                                                 roleConnecte = RoleUtilisateur.BAILLEUR
                                                 ongletActif = OngletPrincipal.ACCUEIL
                                             }
-      )
+                                        )
                                     }
                                 }
                             }
                         }
                     }
-                }
-            }
-
-            is Ecran.DetailBien -> {
-                Column {
-                    BanniereErreur(messageErreur) { messageErreur = null }
-                    val bien = bienSelectionne
-                    EcranDetailBien(
-                        bien = DetailBien(
-                            titre = bien?.titre ?: "",
-                            pays = bien?.pays ?: "",
-                            ville = bien?.ville ?: "",
-                            quartier = bien?.quartier ?: "",
-                            type = bien?.type ?: "",
-                            capacite = bien?.capacite ?: 0,
-                            loyer = bien?.loyer ?: "",
-                            description = "Détails complets à venir."
-                        ),
-                        onEnvoyerDemande = { ecranActuel = Ecran.Principal }
-                    )
                 }
             }
 
@@ -390,7 +363,6 @@ fun LocafricApp() {
                                 chargementEnCours = true
                                 messageErreur = null
 
-                                // Validation de base avant d'envoyer au serveur, pour éviter un aller-retour inutile
                                 if (nouveauBien.titre.isBlank() || nouveauBien.localisation.pays.isBlank() ||
                                     nouveauBien.localisation.ville.isBlank() || nouveauBien.type.isBlank() || nouveauBien.loyer.isBlank()) {
                                     messageErreur = "Merci de remplir au moins le titre, le pays, la ville, le type et le loyer."
@@ -408,7 +380,6 @@ fun LocafricApp() {
                                             val corpsFichier = fichierTemp.asRequestBody("image/*".toMediaTypeOrNull())
                                             MultipartBody.Part.createFormData("photos", fichierTemp.name, corpsFichier)
                                         } catch (e: Exception) {
-                                            // Une photo illisible ne doit pas bloquer tout l'envoi : on la saute simplement
                                             null
                                         }
                                     }
@@ -429,8 +400,6 @@ fun LocafricApp() {
                                         ecranActuel = Ecran.Principal
                                         ongletActif = OngletPrincipal.ACCUEIL
                                     } else {
-                                        // Le serveur a refusé : on affiche le code pour comprendre pourquoi
-                                        // (401 = pas connecté, 403 = pas bailleur, 500 = souci serveur/base de données)
                                         messageErreur = "Le bien n'a pas pu être publié (code ${reponse.code()})."
                                     }
                                 } catch (e: Exception) {
@@ -443,6 +412,3 @@ fun LocafricApp() {
                     )
                 }
             }
-        }
-    }
-}            
