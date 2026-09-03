@@ -69,6 +69,9 @@ interface ApiService {
     @GET("contrats")
     suspend fun listerContrats(@Header("Authorization") token: String): Response<List<ContratReponse>>
 
+@POST("auth/devenir-bailleur")
+    suspend fun devenirBailleur(@Header("Authorization") token: String): Response<AuthReponse>
+
     @POST("contrats/{id}/signer")
     suspend fun signerContrat(@Header("Authorization") token: String, @Path("id") id: Int): Response<ContratReponse>
 
