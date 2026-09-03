@@ -217,8 +217,7 @@ fun LocafricApp() {
                                                 },
                                                 onAjouterBien = { ecranActuel = Ecran.AjouterBien }
                                             )
-                                        } else {
-                                            EcranAccueilLocataire(
+                                        } else {EcranAccueilLocataire(
                                                 infos = InfosLocation(
                                                     nomBien = "Aucune location active",
                                                     ville = "",
@@ -342,7 +341,37 @@ fun LocafricApp() {
                 }
             }
 
-                        is Ecran.AjouterBien -> {
+            is Ecran.DetailBien -> {
+                Column {
+                    BanniereErreur(messageErreur) { messageErreur = null }
+                    val bien = bienSelectionne
+                    EcranDetailBien(
+                        bien = DetailBien(
+                            titre = bien?.titre ?: "",
+                            pays = bien?.pays ?: "",
+                            ville = bien?.ville ?: "",
+                            quartier = bien?.quartier ?: "",
+                            type = bien?.type ?: "",
+                            capacite = bien?.capacite ?: 0,
+                            loyer = bien?.loyer ?: "",
+                            description = "Détails complets à venir."
+                        ),
+                        onEnvoyerDemande = { ecranActuel = Ecran.Principal }
+                    )
+                }
+            }
+
+            is Ecran.Contrat -> {
+                Column {
+                    BanniereErreur(messageErreur) { messageErreur = null }
+                    EcranContrat(
+                        texteContrat = "CONTRAT DE BAIL\n\nEntre le bailleur et le locataire, il est convenu ce qui suit...\n\n(texte du contrat à personnaliser)",
+                        onContratSigne = { ecranActuel = Ecran.Principal }
+                    )
+                }
+            }
+
+            is Ecran.AjouterBien -> {
                 Column {
                     BanniereErreur(messageErreur) { messageErreur = null }
                     if (chargementEnCours) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
