@@ -342,17 +342,7 @@ fun LocafricApp() {
                 }
             }
 
-            is Ecran.Contrat -> {
-                Column {
-                    BanniereErreur(messageErreur) { messageErreur = null }
-                    EcranContrat(
-                        texteContrat = "CONTRAT DE BAIL\n\nEntre le bailleur et le locataire, il est convenu ce qui suit...\n\n(texte du contrat à personnaliser)",
-                        onContratSigne = { ecranActuel = Ecran.Principal }
-                    )
-                }
-            }
-
-            is Ecran.AjouterBien -> {
+                        is Ecran.AjouterBien -> {
                 Column {
                     BanniereErreur(messageErreur) { messageErreur = null }
                     if (chargementEnCours) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -412,3 +402,6 @@ fun LocafricApp() {
                     )
                 }
             }
+        }
+    }
+}
