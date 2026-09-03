@@ -329,8 +329,21 @@ fun LocafricApp() {
                                             ),
                                             onDeconnexion = { ecranActuel = Ecran.Connexion },
                                             onDevenirBailleur = {
-                                                roleConnecte = RoleUtilisateur.BAILLEUR
-                                                ongletActif = OngletPrincipal.ACCUEIL
+                                                scopeCorutine.launch {
+                                                    try {
+                                                        val reponse = RetrofitClient.api.devenirBailleur("Bearer $tokenConnexion")
+                                                        if (reponse.isSuccessful) {
+                                                            val corps = reponse.body()!!
+                                                            tokenConnexion = corps.token
+                                                            roleConnecte = RoleUtilisateur.BAILLEUR
+                                                            ongletActif = OngletPrincipal.ACCUEIL
+                                                        } else {
+                                                            messageErreur = "Impossible de changer de rôle (code ${reponse.code()})."
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        messageErreur = "Impossible de contacter le serveur : ${e.message}"
+                                                    }
+                                                }
                                             }
                                         )
                                     }
