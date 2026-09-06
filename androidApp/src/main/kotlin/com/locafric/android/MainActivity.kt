@@ -50,18 +50,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun BanniereErreur(message: String?, onFermer: () -> Unit) {
+fun BanniereMessage(message: String?, couleur: Color, onFermer: () -> Unit) {
     if (message != null) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFFDECEA))
+                .background(couleur.copy(alpha = 0.12f))
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(message, color = RougeAlerte, modifier = Modifier.weight(1f))
+            Text(message, color = couleur, modifier = Modifier.weight(1f))
             IconButton(onClick = onFermer, modifier = Modifier.size(20.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Fermer", tint = RougeAlerte)
+                Icon(Icons.Default.Close, contentDescription = "Fermer", tint = couleur)
             }
         }
     }
@@ -78,11 +78,15 @@ fun LocafricApp() {
     var nomUtilisateur by remember { mutableStateOf("Utilisateur") }
     var tokenConnexion by remember { mutableStateOf("") }
     var messageErreur by remember { mutableStateOf<String?>(null) }
+    var messageSucces by remember { mutableStateOf<String?>(null) }
     var chargementEnCours by remember { mutableStateOf(false) }
 
     var resultatsRecherche by remember { mutableStateOf<List<BienRecherche>>(emptyList()) }
-    var bienSelectionne by remember { mutableStateOf<BienRecherche?>(null) }
+    var mesBiensBailleur by remember { mutableStateOf<List<BienRecherche>>(emptyList()) }
+
+    var bienSelectionne by remember { mutableStateOf<DetailBienReponse?>(null) }
     var contactActuelId by remember { mutableStateOf<Int?>(null) }
+    var chargementDetailBien by remember { mutableStateOf(false) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
@@ -92,18 +96,43 @@ fun LocafricApp() {
         }
     }
 
-    LaunchedEffect(Unit) {
+    fun convertirBien(it: BienReponse) = BienRecherche(
+        it.id.toString(), it.bailleur_id, it.titre, it.pays, it.ville, it.quartier, it.type, it.capacite, "${it.loyer} F"
+    )
+
+    suspend fun chargerBiensPublics() {
         try {
             val reponse = RetrofitClient.api.rechercherBiens(null, null, null)
             if (reponse.isSuccessful) {
-                resultatsRecherche = reponse.body()?.map {
-                    BienRecherche(it.id.toString(), it.bailleur_id, it.titre, it.pays, it.ville, it.quartier, it.type, it.capacite, "${it.loyer} F")
-                } ?: emptyList()
+                resultatsRecherche = reponse.body()?.map { convertirBien(it) } ?: emptyList()
             } else {
-                messageErreur = "Chargement initial impossible (code ${reponse.code()})."
+                messageErreur = "Chargement impossible (code ${reponse.code()})."
             }
         } catch (e: Exception) {
-            messageErreur = "Connexion au serveur impossible au démarrage : ${e.message}"
+            messageErreur = "Connexion au serveur impossible : ${e.message}"
+        }
+    }
+
+    suspend fun chargerMesBiens() {
+        try {
+            val reponse = RetrofitClient.api.mesBiens("Bearer $tokenConnexion")
+            if (reponse.isSuccessful) {
+                mesBiensBailleur = reponse.body()?.map { convertirBien(it) } ?: emptyList()
+            } else {
+                messageErreur = "Impossible de charger vos biens (code ${reponse.code()})."
+            }
+        } catch (e: Exception) {
+            messageErreur = "Connexion au serveur impossible : ${e.message}"
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        chargerBiensPublics()
+    }
+
+    LaunchedEffect(roleConnecte, tokenConnexion) {
+        if (roleConnecte == RoleUtilisateur.BAILLEUR && tokenConnexion.isNotBlank()) {
+            chargerMesBiens()
         }
     }
 
@@ -113,7 +142,7 @@ fun LocafricApp() {
         when (ecran) {
             is Ecran.Connexion -> {
                 Column {
-                    BanniereErreur(messageErreur) { messageErreur = null }
+                    BanniereMessage(messageErreur, RougeAlerte) { messageErreur = null }
                     if (chargementEnCours) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     EcranConnexion(
                         onConnexion = { infos ->
@@ -192,7 +221,8 @@ fun LocafricApp() {
                         }
                     ) { padding ->
                         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-                            BanniereErreur(messageErreur) { messageErreur = null }
+                            BanniereMessage(messageErreur, RougeAlerte) { messageErreur = null }
+                            BanniereMessage(messageSucces, VertSucces) { messageSucces = null }
                             if (chargementEnCours) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
                             AnimatedContent(targetState = ongletActif, label = "onglets", transitionSpec = {
@@ -204,16 +234,29 @@ fun LocafricApp() {
                                             EcranTableauBordBailleur(
                                                 resume = ResumeBailleur(
                                                     nomBailleur = nomUtilisateur,
-                                                    nombreBiens = resultatsRecherche.size,
+                                                    nombreBiens = mesBiensBailleur.size,
                                                     revenusMois = "—",
                                                     nombreRetards = 0,
-                                                    biens = resultatsRecherche.map { BienBailleur(it.id, it.titre, StatutPaiement.PAYE) }
+                                                    biens = mesBiensBailleur.map { BienBailleur(it.id, it.titre, StatutPaiement.PAYE) }
                                                 ),
                                                 onOuvrirBien = { bien ->
-                                                    val trouve = resultatsRecherche.find { it.id == bien.id }
-                                                    bienSelectionne = trouve
-                                                    contactActuelId = trouve?.bailleurId
-                                                    ecranActuel = Ecran.DetailBien
+                                                    scopeCorutine.launch {
+                                                        chargementDetailBien = true
+                                                        try {
+                                                            val reponse = RetrofitClient.api.obtenirDetailBien(bien.id.toInt())
+                                                            if (reponse.isSuccessful) {
+                                                                bienSelectionne = reponse.body()
+                                                                contactActuelId = reponse.body()?.bailleur_id
+                                                                ecranActuel = Ecran.DetailBien
+                                                            } else {
+                                                                messageErreur = "Impossible de charger le bien (code ${reponse.code()})."
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            messageErreur = "Impossible de contacter le serveur : ${e.message}"
+                                                        } finally {
+                                                            chargementDetailBien = false
+                                                        }
+                                                    }
                                                 },
                                                 onAjouterBien = { ecranActuel = Ecran.AjouterBien }
                                             )
@@ -245,9 +288,7 @@ fun LocafricApp() {
                                                             pays.ifBlank { null }, ville.ifBlank { null }, quartier.ifBlank { null }
                                                         )
                                                         if (reponse.isSuccessful) {
-                                                            resultatsRecherche = reponse.body()?.map {
-                                                                BienRecherche(it.id.toString(), it.bailleur_id, it.titre, it.pays, it.ville, it.quartier, it.type, it.capacite, "${it.loyer} F")
-                                                            } ?: emptyList()
+                                                            resultatsRecherche = reponse.body()?.map { convertirBien(it) } ?: emptyList()
                                                             if (resultatsRecherche.isEmpty()) {
                                                                 messageErreur = "Aucun bien trouvé pour cette recherche."
                                                             }
@@ -262,9 +303,23 @@ fun LocafricApp() {
                                                 }
                                             },
                                             onOuvrirBien = { bien ->
-                                                bienSelectionne = bien
-                                                contactActuelId = bien.bailleurId
-                                                ecranActuel = Ecran.DetailBien
+                                                scopeCorutine.launch {
+                                                    chargementDetailBien = true
+                                                    try {
+                                                        val reponse = RetrofitClient.api.obtenirDetailBien(bien.id.toInt())
+                                                        if (reponse.isSuccessful) {
+                                                            bienSelectionne = reponse.body()
+                                                            contactActuelId = reponse.body()?.bailleur_id
+                                                            ecranActuel = Ecran.DetailBien
+                                                        } else {
+                                                            messageErreur = "Impossible de charger le bien (code ${reponse.code()})."
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        messageErreur = "Impossible de contacter le serveur : ${e.message}"
+                                                    } finally {
+                                                        chargementDetailBien = false
+                                                    }
+                                                }
                                             }
                                         )
                                     }
@@ -330,6 +385,7 @@ fun LocafricApp() {
                                             onDeconnexion = { ecranActuel = Ecran.Connexion },
                                             onDevenirBailleur = {
                                                 scopeCorutine.launch {
+                                                    chargementEnCours = true
                                                     try {
                                                         val reponse = RetrofitClient.api.devenirBailleur("Bearer $tokenConnexion")
                                                         if (reponse.isSuccessful) {
@@ -337,11 +393,35 @@ fun LocafricApp() {
                                                             tokenConnexion = corps.token
                                                             roleConnecte = RoleUtilisateur.BAILLEUR
                                                             ongletActif = OngletPrincipal.ACCUEIL
+                                                            messageSucces = "Tu es maintenant aussi bailleur."
                                                         } else {
                                                             messageErreur = "Impossible de changer de rôle (code ${reponse.code()})."
                                                         }
                                                     } catch (e: Exception) {
                                                         messageErreur = "Impossible de contacter le serveur : ${e.message}"
+                                                    } finally {
+                                                        chargementEnCours = false
+                                                    }
+                                                }
+                                            },
+                                            onRedevenirLocataire = {
+                                                scopeCorutine.launch {
+                                                    chargementEnCours = true
+                                                    try {
+                                                        val reponse = RetrofitClient.api.redevenirLocataire("Bearer $tokenConnexion")
+                                                        if (reponse.isSuccessful) {
+                                                            val corps = reponse.body()!!
+                                                            tokenConnexion = corps.token
+                                                            roleConnecte = RoleUtilisateur.LOCATAIRE
+                                                            ongletActif = OngletPrincipal.ACCUEIL
+                                                            messageSucces = "Tu es de nouveau en mode locataire."
+                                                        } else {
+                                                            messageErreur = "Impossible de changer de rôle (code ${reponse.code()})."
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        messageErreur = "Impossible de contacter le serveur : ${e.message}"
+                                                    } finally {
+                                                        chargementEnCours = false
                                                     }
                                                 }
                                             }
@@ -356,7 +436,10 @@ fun LocafricApp() {
 
             is Ecran.DetailBien -> {
                 Column {
-                    BanniereErreur(messageErreur) { messageErreur = null }
+                    BanniereMessage(messageErreur, RougeAlerte) { messageErreur = null }
+                    if (chargementDetailBien) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
                     val bien = bienSelectionne
                     EcranDetailBien(
                         bien = DetailBien(
@@ -367,7 +450,8 @@ fun LocafricApp() {
                             type = bien?.type ?: "",
                             capacite = bien?.capacite ?: 0,
                             loyer = bien?.loyer ?: "",
-                            description = "Détails complets à venir."
+                            description = bien?.description ?: "Aucune description fournie.",
+                            photos = bien?.photos ?: emptyList()
                         ),
                         onEnvoyerDemande = { ecranActuel = Ecran.Principal }
                     )
@@ -376,7 +460,7 @@ fun LocafricApp() {
 
             is Ecran.Contrat -> {
                 Column {
-                    BanniereErreur(messageErreur) { messageErreur = null }
+                    BanniereMessage(messageErreur, RougeAlerte) { messageErreur = null }
                     EcranContrat(
                         texteContrat = "CONTRAT DE BAIL\n\nEntre le bailleur et le locataire, il est convenu ce qui suit...\n\n(texte du contrat à personnaliser)",
                         onContratSigne = { ecranActuel = Ecran.Principal }
@@ -386,7 +470,7 @@ fun LocafricApp() {
 
             is Ecran.AjouterBien -> {
                 Column {
-                    BanniereErreur(messageErreur) { messageErreur = null }
+                    BanniereMessage(messageErreur, RougeAlerte) { messageErreur = null }
                     if (chargementEnCours) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     EcranAjouterBien(
                         onAnnuler = { ecranActuel = Ecran.Principal },
@@ -429,6 +513,9 @@ fun LocafricApp() {
                                         photos = partiesPhotos
                                     )
                                     if (reponse.isSuccessful) {
+                                        messageSucces = "Bien publié avec succès !"
+                                        chargerMesBiens()
+                                        chargerBiensPublics()
                                         ecranActuel = Ecran.Principal
                                         ongletActif = OngletPrincipal.ACCUEIL
                                     } else {
