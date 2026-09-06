@@ -1,16 +1,21 @@
 package com.locafric.android.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 data class DetailBien(
     val titre: String,
@@ -20,7 +25,8 @@ data class DetailBien(
     val type: String,
     val capacite: Int,
     val loyer: String,
-    val description: String
+    val description: String,
+    val photos: List<String> = emptyList()
 )
 
 @Composable
@@ -34,14 +40,34 @@ fun EcranDetailBien(
             .background(FondClair)
             .padding(16.dp)
     ) {
-        // Zone image (placeholder en attendant la vraie photo)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xFFDDE3EA))
-        )
+        if (bien.photos.isNotEmpty()) {
+            // Vraies photos du bien, défilables horizontalement
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(bien.photos) { url ->
+                    AsyncImage(
+                        model = url,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .width(280.dp)
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                    )
+                }
+            }
+        } else {
+            // Aucune photo disponible : espace réservé neutre
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFDDE3EA)),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                Text("Aucune photo disponible", fontSize = 12.sp, color = Color.Gray)
+            }
+        }
 
         Spacer(modifier = Modifier.height(14.dp))
 
