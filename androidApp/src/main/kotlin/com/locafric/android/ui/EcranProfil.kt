@@ -25,7 +25,8 @@ data class ProfilUtilisateur(val nom: String, val email: String, val role: Strin
 fun EcranProfil(
     profil: ProfilUtilisateur,
     onDeconnexion: () -> Unit,
-    onDevenirBailleur: () -> Unit = {}
+    onDevenirBailleur: () -> Unit = {},
+    onRedevenirLocataire: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxSize().background(FondClair).padding(16.dp),
@@ -60,9 +61,15 @@ fun EcranProfil(
 
         LigneProfil(titre = "Mes informations")
         LigneProfil(titre = "Documents et contrats")
+
+        // Le bouton change selon le rôle actuel : un locataire peut devenir bailleur,
+        // et inversement, un bailleur peut repasser locataire.
         if (profil.role == "Locataire") {
             LigneProfil(titre = "Devenir bailleur (mettre un bien en location)", onClick = onDevenirBailleur)
+        } else {
+            LigneProfil(titre = "Redevenir locataire", onClick = onRedevenirLocataire)
         }
+
         LigneProfil(titre = "Paramètres")
         LigneProfil(titre = "Aide et support")
 
