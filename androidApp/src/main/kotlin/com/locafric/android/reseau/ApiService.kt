@@ -45,6 +45,15 @@ interface ApiService {
         @Query("quartier") quartier: String?
     ): Response<List<BienReponse>>
 
+@GET("biens/mes-biens")
+    suspend fun mesBiens(@Header("Authorization") token: String): Response<List<BienReponse>>
+
+    @GET("biens/{id}")
+    suspend fun obtenirDetailBien(@Path("id") id: Int): Response<DetailBienReponse>
+
+    @POST("auth/redevenir-locataire")
+    suspend fun redevenirLocataire(@Header("Authorization") token: String): Response<AuthReponse>
+
     @Multipart
     @POST("biens")
     suspend fun ajouterBien(
