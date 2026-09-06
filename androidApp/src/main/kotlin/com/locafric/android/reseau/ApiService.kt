@@ -22,6 +22,20 @@ data class BienReponse(
     val loyer: String
 )
 
+data class DetailBienReponse(
+    val id: Int,
+    val bailleur_id: Int,
+    val titre: String,
+    val pays: String,
+    val ville: String,
+    val quartier: String,
+    val type: String,
+    val capacite: Int,
+    val loyer: String,
+    val description: String?,
+    val photos: List<String>
+)
+
 data class DonneesPays(val drapeau: String, val villes: Map<String, List<String>>)
 
 data class RequeteContrat(val bienId: Int, val locataireId: Int, val montantLoyer: String, val dateDebut: String)
